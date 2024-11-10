@@ -133,6 +133,42 @@ export class VisitsController {
     );
   }
 
+  @Get('list')
+  @ApiOperation({
+    summary: 'Get all visits of a patient',
+    description:
+      'Fetches all visits associated with the authenticated patient.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of visits retrieved successfully',
+    schema: {
+      example: {
+        status: 'success',
+        data: [
+          {
+            visitId: '102934',
+            date: 'March 17, 2024; 10:40 AM',
+          },
+          {
+            visitId: '9130',
+            date: 'Nov 15, 2023; 10:40 AM',
+          },
+          {
+            visitId: '3948',
+            date: 'Nov 01, 2023; 10:40 AM',
+          },
+        ],
+        message: 'Visits retrieved successfully',
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'No visits found for this patient' })
+  @ApiResponse({ status: 500, description: 'Internal server error' })
+  async allVistisOfPatient(@Request() req): Promise<ResponseDto> {
+    return this.visitsService.allVistisOfPatient(req.user.userId);
+  }
+
   @Get(':visitId/answers')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Retrieve answers for a specific visit' })

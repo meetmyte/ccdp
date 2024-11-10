@@ -1,6 +1,6 @@
 // src/shared/schemas/answers.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types, Schema as MongooseSchema } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
 export type AnswerDocument = Answer & Document;
 
@@ -15,8 +15,12 @@ export class Answer {
   @Prop({ type: Types.ObjectId, ref: 'Question', required: true })
   questionId: Types.ObjectId;
 
-  @Prop({ type: MongooseSchema.Types.Mixed, required: true }) // Use Schema.Types.Mixed for mixed types
-  answer: string | number | boolean;
+  @Prop({ type: [Object], default: null })
+  answer: Array<{
+    text: string;
+    answer: string | number | boolean;
+    unit?: string;
+  }>;
 
   @Prop({ default: Date.now })
   createdAt?: Date;

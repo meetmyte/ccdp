@@ -18,4 +18,8 @@ export class VisitsRepository {
   async findVisitById(visitId: string): Promise<Visit> {
     return this.visitModel.findOne({ _id: visitId }).exec();
   }
+
+  async findVisitByUserId(usreId: string): Promise<Visit[]> {
+    return this.visitModel.find({ patientId: usreId }).exec();
+  }
 }
