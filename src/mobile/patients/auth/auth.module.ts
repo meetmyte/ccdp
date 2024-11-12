@@ -5,6 +5,7 @@ import { UserRepository } from 'src/shared/repositories/user.repository';
 import { SharedModule } from 'src/shared/shared.module';
 import { EmailService } from 'src/helpers/email.service';
 import { JwtModule } from '@nestjs/jwt';
+import { TwilioService } from 'src/helpers/twillio.service';
 
 @Module({
   imports: [
@@ -15,6 +16,6 @@ import { JwtModule } from '@nestjs/jwt';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserRepository, EmailService],
+  providers: [AuthService, UserRepository, EmailService, TwilioService],
 })
 export class AuthModule {}

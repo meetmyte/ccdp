@@ -12,17 +12,20 @@ import { LoginDto } from './dto/login.dto';
 import { EmailService } from 'src/helpers/email.service';
 import { otpLoginTemplate } from 'src/helpers/emails/logn-otp-template';
 import { JwtService } from '@nestjs/jwt';
+import { TwilioService } from 'src/helpers/twillio.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userRepository: UserRepository,
     private emailService: EmailService,
+    private twillioService: TwilioService,
     private readonly jwtService: JwtService,
   ) {}
 
   private generateOtp(): number {
-    return Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit numeric OTP
+    // return Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit numeric OTP
+    return 123123;
   }
 
   private async updatePatientOtp(
@@ -118,7 +121,7 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<ResponseDto> {
     const { identifier } = loginDto;
     const isMobile = /^\d{10}$/.test(identifier); // Assuming mobile number is 10 digits
-
+    // await this.sendOtpBySms('+15005550001', 123456);
     let user: any;
     if (isMobile) {
       user = await this.userRepository.findInactiveMobile(identifier);
@@ -149,11 +152,7 @@ export class AuthService {
   }
 
   private async sendOtpBySms(mobile: string, otp: number): Promise<void> {
-    // await this.twilioClient.messages.create({
-    //   body: `Your OTP is ${otp}`,
-    //   from: process.env.TWILIO_PHONE_NUMBER,
-    //   to: mobile,
-    // });
+    await this.twillioService.sendOtp(mobile, otp.toString());
   }
 
   private async sendOtpByEmail(otp: number, user: any): Promise<void> {

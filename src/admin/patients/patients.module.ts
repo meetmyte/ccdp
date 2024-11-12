@@ -6,6 +6,7 @@ import { SharedModule } from 'src/shared/shared.module';
 import { HelperService } from 'src/helpers/helper.service';
 import { EmailService } from 'src/helpers/email.service';
 import { JwtService } from '@nestjs/jwt';
+import { TwilioService } from 'src/helpers/twillio.service';
 
 @Module({
   imports: [SharedModule],
@@ -15,6 +16,7 @@ import { JwtService } from '@nestjs/jwt';
     UserRepository,
     HelperService,
     EmailService,
+    TwilioService,
     JwtService,
   ],
 })

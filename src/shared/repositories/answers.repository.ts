@@ -18,25 +18,48 @@ export class AnswersRepository {
   ): Promise<Answer> {
     return this.answerModel
       .findOneAndUpdate(
-        { visitId, categoryId, questionId },
+        {
+          visitId,
+          categoryId: new Types.ObjectId(categoryId),
+          questionId: new Types.ObjectId(questionId),
+        },
         { answer, answeredAt: new Date() },
         { new: true, upsert: true },
       )
       .exec();
   }
 
+  // async getAnswersByVisitId(visitId: string): Promise<any> {
+  //   return this.answerModel
+  //     .find({ visitId: new Types.ObjectId(visitId) }) // Convert to ObjectId
+  //     .populate({
+  //       path: 'categoryId', // Populates the category information from QuestionCategories
+  //       model: 'QuestionCategories',
+  //     })
+  //     .populate({
+  //       path: 'questionId', // Populates the question details from Question schema
+  //       model: 'Question',
+  //     })
+  //     .exec();
+  // }
+
   async getAnswersByVisitId(visitId: string): Promise<any> {
-    return this.answerModel
-      .find({ visitId: new Types.ObjectId(visitId) }) // Convert to ObjectId
+    const answers = await this.answerModel
+      .find({ visitId: new Types.ObjectId(visitId) }) // Ensure ObjectId type
       .populate({
-        path: 'categoryId', // Populates the category information from QuestionCategories
+        path: 'categoryId',
         model: 'QuestionCategories',
+        select: '_id name', // Select only necessary fields for `categoryId`
       })
       .populate({
-        path: 'questionId', // Populates the question details from Question schema
+        path: 'questionId',
         model: 'Question',
+        select: '_id text type subQuestions scale', // Select fields for `questionId`
       })
       .exec();
+
+    console.log('Populated Answers:', answers);
+    return answers;
   }
 }
 

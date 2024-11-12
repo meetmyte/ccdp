@@ -94,186 +94,95 @@ export class VisitsService {
     questionId: string,
     answer: any,
   ): Promise<ResponseDto> {
-    // Check if the visit exists
+    // Check if the visit, category, and question exist
     const visit: any = await this.visitRepository.findVisitById(visitId);
     if (!visit) throw new NotFoundException('Visit not found');
 
-    // Check if the category exists
     const category =
       await this.questionsCategoryRepository.findById(categoryId);
     if (!category) throw new NotFoundException('Category not found');
 
-    // Check if the question exists within the specified category and retrieve it
     const question = category.questions.find(
       (q) => q._id.toString() === questionId,
     );
-    if (!question) {
+    if (!question)
       throw new NotFoundException(
         'Question not found in the specified category',
       );
-    }
 
-    // Validate the answer based on question type
+    // Format answer based on question type
+    let formattedAnswer;
     switch (question.type) {
       case 'text':
-        if (typeof answer !== 'string') {
-          throw new BadRequestException(
-            'Answer must be a string for text questions',
-          );
-        }
-        break;
-
       case 'scale':
-        if (
-          typeof answer !== 'number' ||
-          answer < question.scale.min ||
-          answer > question.scale.max
-        ) {
-          throw new BadRequestException(
-            `Answer must be a number between ${question.scale.min} and ${question.scale.max}`,
-          );
-        }
-        break;
-
       case 'boolean':
-        if (typeof answer !== 'boolean') {
-          throw new BadRequestException('Answer must be a boolean');
-        }
+        formattedAnswer = [{ text: question.text, answer }];
         break;
-
-      case 'interactive_image':
-        if (typeof answer !== 'object' || !answer.coordinates) {
-          throw new BadRequestException(
-            'Answer must include coordinates for interactive image',
-          );
-        }
-        break;
-
       case 'multiple':
-        if (!Array.isArray(answer)) {
-          throw new BadRequestException(
-            'Answer must be an array of strings or booleans for multiple questions',
-          );
-        }
+        formattedAnswer = answer.map((ans) => ({
+          text: ans.text,
+          answer: ans.answer,
+        }));
         break;
-
+      case 'interactive_image':
+        formattedAnswer = [{ text: question.text, answer }];
+        break;
       default:
-        throw new BadRequestException('Unknown question type');
+        throw new BadRequestException('Invalid question type');
     }
 
-    // Proceed to store or update the answer
+    // Save or update the answer
     await this.answerRepository.createOrUpdateAnswer(
       visit._id,
       categoryId,
       questionId,
-      answer,
+      formattedAnswer,
     );
 
-    return ResponseDto.success(null, 'Answer stored/updated successfully');
+    return ResponseDto.success(null, 'Answer stored successfully');
   }
-
-  // async getAnswersByVisitId(visitId: string): Promise<ResponseDto> {
-  //   try {
-  //     const answers: any =
-  //       await this.answerRepository.getAnswersByVisitId(visitId);
-
-  //     if (!answers.length) {
-  //       this.logger.warn(`No answers found for visitId: ${visitId}`);
-  //       throw new NotFoundException('No answers found for this visit');
-  //     }
-
-  //     // Transform the answers to group by categories and include answer data in each question
-  //     const groupedAnswers: any = answers.reduce((acc, answer) => {
-  //       const categoryId = answer.categoryId._id.toString();
-  //       const question = {
-  //         ...answer.questionId.toJSON(),
-  //         answer: answer.answer,
-  //       };
-
-  //       // Check if the category is already in the accumulator
-  //       const existingCategory = acc.find((cat) => cat._id === categoryId);
-  //       if (existingCategory) {
-  //         existingCategory.questions.push(question);
-  //       } else {
-  //         acc.push({
-  //           _id: categoryId,
-  //           name: answer.categoryId.name,
-  //           createdAt: answer.categoryId.createdAt,
-  //           updatedAt: answer.categoryId.updatedAt,
-  //           questions: [question],
-  //         });
-  //       }
-
-  //       return acc;
-  //     }, []);
-
-  //     return ResponseDto.success(
-  //       groupedAnswers,
-  //       'Answers retrieved successfully',
-  //     );
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Failed to retrieve answers for visitId: ${visitId}`,
-  //       error.stack,
-  //     );
-  //     throw new InternalServerErrorException('Unable to retrieve answers');
-  //   }
-  // }
 
   async getAnswersByVisitId(visitId: string): Promise<ResponseDto> {
     try {
-      const answers: any =
-        await this.answerRepository.getAnswersByVisitId(visitId);
-
-      if (!answers.length) {
-        this.logger.warn(`No answers found for visitId: ${visitId}`);
-        throw new NotFoundException('No answers found for this visit');
-      }
-
-      const groupedAnswers = answers.reduce((acc, answer) => {
-        const categoryId = answer.categoryId._id.toString();
-
-        // If the question is of type 'multiple', merge answers into subQuestions
-        const questionWithAnswer = {
-          ...answer.questionId.toJSON(),
-          subQuestions:
-            answer.questionId.subQuestions?.map((subQ) => {
-              const foundAnswer = answer.answer?.find(
-                (ans) => ans.text === subQ.text,
-              );
-
-              return {
-                ...subQ,
-                answer: foundAnswer !== undefined ? foundAnswer.answer : null, // Ensure `false` values are not converted to null
-              };
-            }) || [],
-        };
-
-        let category = acc.find((cat) => cat._id === categoryId);
-        if (!category) {
-          category = {
-            _id: categoryId,
-            name: answer.categoryId.name,
-            createdAt: answer.categoryId.createdAt,
-            updatedAt: answer.categoryId.updatedAt,
-            questions: [],
+      const questions = await this.questionsCategoryRepository.findAllQuestions();
+      const answers = await this.answerRepository.getAnswersByVisitId(visitId);
+  
+      // Create a map to store answers by questionId for easy access
+      const answerMap = new Map();
+      answers.forEach((answer) => {
+        answerMap.set(answer.questionId.id, answer.answer);
+      });
+  
+      // Map each question to its answer if available
+      const groupedQuestions = questions.map((category) => ({
+        _id: category._id,
+        name: category.name,
+        createdAt: category.createdAt,
+        updatedAt: category.updatedAt,
+        questions: category.questions.map((question) => {
+          const answerData = answerMap.get(question._id.toString()) || [];
+  
+          // Extract main question answer if it exists
+          const mainAnswer = answerData.find(a => a.text === question.text)?.answer || null;
+  
+          // Map sub-questions with their answers
+          const subQuestionsWithAnswers = question.subQuestions?.map((subQ) => {
+            const subAnswer = answerData.find(a => a.text === subQ.text)?.answer || null;
+            return { ...subQ, answer: subAnswer };
+          }) || [];
+  
+          // Return the question with main answer and updated sub-questions
+          return {
+            ...question.toJSON(),
+            answer: mainAnswer,
+            subQuestions: subQuestionsWithAnswers,
           };
-          acc.push(category);
-        }
-
-        category.questions.push(questionWithAnswer);
-        return acc;
-      }, []);
-
-      return ResponseDto.success(
-        groupedAnswers,
-        'Answers retrieved successfully',
-      );
+        }),
+      }));
+  
+      return ResponseDto.success(groupedQuestions, 'Answers retrieved successfully');
     } catch (error) {
-      this.logger.error(
-        `Failed to retrieve answers for visitId: ${visitId}`,
-        error.stack,
-      );
+      this.logger.error(`Failed to retrieve answers for visitId: ${visitId}`, error.stack);
       throw new InternalServerErrorException('Unable to retrieve answers');
     }
   }
