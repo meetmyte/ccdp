@@ -111,7 +111,7 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
 
     return ResponseDto.success(
-      { patient, token },
+      { user: patient, token },
       'Mobile verified successfully.',
     );
   }
