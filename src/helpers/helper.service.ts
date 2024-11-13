@@ -3,15 +3,15 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class HelperService {
   generateUniqueCode(): string {
-    const prefix = 'PT'; // Static or configurable prefix
+    const prefix = 'PT';
 
-    // Get the current timestamp in milliseconds
-    const timestamp = Date.now().toString().slice(-6); // Extract last 6 digits of timestamp
+    // Generate a random 2-digit number (e.g., 01)
+    const randomDigits = Math.floor(10 + Math.random() * 90).toString(); // Always 2 digits
 
-    // Generate a random 3-digit number (e.g., 019)
-    const randomDigits = Math.floor(100 + Math.random() * 900).toString(); // Ensures it's always 3 digits
+    // Get the last 2 digits of the current timestamp in milliseconds
+    const timestamp = Date.now().toString().slice(-2); // Ensures 2 digits from timestamp
 
-    // Combine prefix, random digits, and timestamp
+    // Combine prefix, random digits, and timestamp to make a 6-character unique code
     const uniqueCode = `${prefix}${randomDigits}${timestamp}`;
 
     return uniqueCode;
