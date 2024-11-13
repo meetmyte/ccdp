@@ -103,7 +103,17 @@ export class AuthService {
       is_mobile_verified: true,
     });
 
-    return ResponseDto.success(null, 'Mobile verified successfully.');
+    const payload = {
+      userId: patient?._id.toString(),
+      role: patient.role,
+      email: patient.email,
+    };
+    const token = this.jwtService.sign(payload);
+
+    return ResponseDto.success(
+      { patient, token },
+      'Mobile verified successfully.',
+    );
   }
 
   async login(loginDto: LoginDto): Promise<ResponseDto> {
