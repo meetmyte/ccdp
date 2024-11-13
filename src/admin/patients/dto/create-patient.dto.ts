@@ -29,6 +29,10 @@ export class CreatePatientDto {
 
   @ApiProperty()
   @IsNotEmpty()
+  medicare_code: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
   gender: string;
 
   @ApiProperty()

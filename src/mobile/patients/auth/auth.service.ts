@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { UserRepository } from 'src/shared/repositories/user.repository';
 import { VerifyPatientDto } from './dto/verify-patient.dto';
@@ -45,9 +41,8 @@ export class AuthService {
         'Hospital code verified successfully.',
       );
     }
-    throw new BadRequestException(
-      ResponseDto.badRequest(null, 'Invalid or incorrect hospital code'),
-    );
+
+    return ResponseDto.badRequest(null, 'Invalid or incorrect hospital code');
   }
 
   async verifyPatientDetails(
@@ -57,11 +52,9 @@ export class AuthService {
     const patient = await this.userRepository.findByHospitalCode(hospitalCode);
 
     if (!patient) {
-      throw new BadRequestException(
-        ResponseDto.badRequest(
-          null,
-          'Hospital code or patient details are incorrect',
-        ),
+      return ResponseDto.badRequest(
+        null,
+        'Hospital code or patient details are incorrect',
       );
     }
 
@@ -80,9 +73,7 @@ export class AuthService {
       false,
     );
     if (!patient) {
-      throw new BadRequestException(
-        ResponseDto.badRequest(null, 'Mobile number not found'),
-      );
+      return ResponseDto.badRequest(null, 'Mobile number not found');
     }
 
     const otp = this.generateOtp();
@@ -99,15 +90,11 @@ export class AuthService {
       false,
     );
     if (!patient) {
-      throw new BadRequestException(
-        ResponseDto.badRequest(null, 'Mobile number not found'),
-      );
+      return ResponseDto.badRequest(null, 'Mobile number not found');
     }
 
     if (patient.otp !== +otp) {
-      throw new BadRequestException(
-        ResponseDto.badRequest(null, 'Invalid OTP'),
-      );
+      return ResponseDto.badRequest(null, 'Invalid OTP');
     }
 
     await this.userRepository.updateById(patient._id, {
@@ -128,16 +115,12 @@ export class AuthService {
     if (isMobile) {
       user = await this.userRepository.findInactiveMobile(identifier);
       if (!user) {
-        throw new BadRequestException(
-          ResponseDto.badRequest(null, 'Mobile number not found'),
-        );
+        return ResponseDto.badRequest(null, 'Mobile number not found');
       }
     } else {
       user = await this.userRepository.findByEmail(identifier);
       if (!user) {
-        throw new BadRequestException(
-          ResponseDto.badRequest(null, 'Email not found'),
-        );
+        return ResponseDto.badRequest(null, 'Email not found');
       }
     }
 
@@ -178,30 +161,22 @@ export class AuthService {
     if (isMobile) {
       user = await this.userRepository.findInactiveMobile(identifier);
       if (!user) {
-        throw new BadRequestException(
-          ResponseDto.badRequest(null, 'Mobile number not found'),
-        );
+        return ResponseDto.badRequest(null, 'Mobile number not found');
       }
     } else {
       user = await this.userRepository.findByEmail(identifier);
       if (!user) {
-        throw new BadRequestException(
-          ResponseDto.badRequest(null, 'Email not found'),
-        );
+        return ResponseDto.badRequest(null, 'Email not found');
       }
     }
 
     if (!user) {
-      throw new BadRequestException(
-        ResponseDto.badRequest(null, 'User not found'),
-      );
+      return ResponseDto.badRequest(null, 'User not found');
     }
 
     // Verify OTP
     if (user.login_otp !== +otp) {
-      throw new UnauthorizedException(
-        ResponseDto.unAuthorized(null, 'Invalid OTP'),
-      );
+      return ResponseDto.unAuthorized(null, 'Invalid OTP');
     }
 
     // Update user status and clear OTP after successful verification

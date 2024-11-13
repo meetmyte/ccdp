@@ -74,7 +74,9 @@ export class UserRepository {
   async findByHospitalCode(hospital_code: string): Promise<any> {
     return this.userModel
       .findOne({ hospital_code })
-      .select('_id first_name last_name mobile_no date_of_birth gender') // Specify the fields you want
+      .select(
+        '_id first_name last_name mobile_no date_of_birth gender medicare_code',
+      ) // Specify the fields you want
       .exec();
   }
 

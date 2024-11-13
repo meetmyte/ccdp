@@ -30,7 +30,11 @@ export class PatientsService {
     const isPatientExists = await this.userRepository.findByEmail(
       createPatientDto.email,
     );
-    if (isPatientExists) {
+
+    const isPatientMobileExists = await this.userRepository.findInactiveMobile(
+      createPatientDto.mobile,
+    );
+    if (isPatientExists || isPatientMobileExists) {
       return ResponseDto.badRequest(null, 'Patient record already exists');
     }
 
