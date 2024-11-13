@@ -12,11 +12,13 @@ import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { EmailService } from 'src/helpers/email.service';
 import { medicareCodeTemplate } from 'src/helpers/emails/medicare-code-template';
+import { VisitsRepository } from 'src/shared/repositories/visits.repository';
 
 @Injectable()
 export class PatientsService {
   constructor(
     private readonly userRepository: UserRepository,
+    private readonly visitRepository: VisitsRepository,
     private helperService: HelperService,
     private emailService: EmailService,
   ) {}
@@ -113,6 +115,14 @@ export class PatientsService {
     );
 
     return ResponseDto.success(updatedPatient, 'Patient updated successfully');
+  }
+
+  async getVisitsByPatientId(patientId: string): Promise<any[]> {
+    const visits = await this.visitRepository.findVisitByUserId(patientId);
+    if (!visits || visits.length === 0) {
+      throw new NotFoundException('No visits found for this patient');
+    }
+    return visits;
   }
 
   // Delete a patient

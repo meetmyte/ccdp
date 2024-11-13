@@ -83,4 +83,21 @@ export class PatientsController {
   ): Promise<ResponseDto> {
     return this.patientsService.getPatients(paginationFilterDto);
   }
+
+  @Get(':patientId/visits')
+  @ApiOperation({
+    summary: 'Get visits list for a specific patient by patient ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Visits list retrieved successfully',
+    type: ResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Patient not found or no visits' })
+  async getVisitsByPatientId(
+    @Param('patientId') patientId: string,
+  ): Promise<ResponseDto> {
+    const visits = await this.patientsService.getVisitsByPatientId(patientId);
+    return ResponseDto.success(visits, 'Visits list retrieved successfully');
+  }
 }
