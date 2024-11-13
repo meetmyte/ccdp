@@ -113,6 +113,7 @@ export class AuthService {
     await this.userRepository.updateById(patient._id, {
       otp: null,
       is_active: true,
+      is_mobile_verified: true,
     });
 
     return ResponseDto.success(null, 'Mobile verified successfully.');
@@ -122,6 +123,7 @@ export class AuthService {
     const { identifier } = loginDto;
     const isMobile = /^\d{10}$/.test(identifier); // Assuming mobile number is 10 digits
     // await this.sendOtpBySms('+15005550001', 123456);
+
     let user: any;
     if (isMobile) {
       user = await this.userRepository.findInactiveMobile(identifier);
@@ -139,11 +141,15 @@ export class AuthService {
       }
     }
 
+    if (!user?.is_mobile_verified) {
+      return ResponseDto.success(null, 'mobile is not verified', 301);
+    }
+
     const otp = this.generateOtp();
     await this.userRepository.updateById(user._id, { login_otp: otp });
 
     if (isMobile) {
-      await this.sendOtpBySms(identifier, otp);
+      // await this.sendOtpBySms(identifier, otp);
     } else {
       await this.sendOtpByEmail(otp, user);
     }

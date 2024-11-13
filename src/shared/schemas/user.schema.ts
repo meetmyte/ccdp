@@ -50,6 +50,9 @@ export class User {
 
   @Prop({ required: false, default: null })
   date_of_birth: Date;
+
+  @Prop({ default: false })
+  is_mobile_verified: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
