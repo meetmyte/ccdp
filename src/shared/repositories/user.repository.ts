@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
+import { USER_TYPE } from 'src/helpers/enums';
 
 @Injectable()
 export class UserRepository {
@@ -19,7 +20,7 @@ export class UserRepository {
   }
 
   // Generic method to fetch all users with pagination, filters, and sorting
-  async findAll(paginationFilterDto: any): Promise<User[]> {
+  async findAll(paginationFilterDto: any): Promise<any> {
     const {
       page = 1,
       limit = 10,
@@ -29,7 +30,7 @@ export class UserRepository {
     } = paginationFilterDto;
 
     // Create the query object using dynamic filters
-    const query: any = {};
+    const query: any = { role: USER_TYPE.PATIENT };
 
     Object.keys(filters).forEach((key) => {
       // Use regex for string fields to make searches case-insensitive
@@ -40,6 +41,8 @@ export class UserRepository {
       }
     });
 
+    const totalCount = await this.userModel.countDocuments(query);
+
     // Execute the query with pagination and sorting
     const users = await this.userModel
       .find(query)
@@ -48,7 +51,7 @@ export class UserRepository {
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 }) // Sorting by field
       .exec();
 
-    return users;
+    return { users, totalCount };
   }
 
   async findById(userId: string): Promise<User | null> {

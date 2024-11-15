@@ -94,11 +94,12 @@ export class PatientsService {
     const pageInfo = {
       page: page || 1, // default to 1 if not provided
       limit: limit || 10, // default to 10 if not provided
+      total: patients.totalCount,
     };
 
     // Return success response
     return ResponseDto.success(
-      { patients, pageInfo },
+      { users: patients.users, pageInfo },
       'Patients listed successfully',
     );
   }

@@ -144,15 +144,16 @@ export class VisitsService {
 
   async getAnswersByVisitId(visitId: string): Promise<ResponseDto> {
     try {
-      const questions = await this.questionsCategoryRepository.findAllQuestions();
+      const questions =
+        await this.questionsCategoryRepository.findAllQuestions();
       const answers = await this.answerRepository.getAnswersByVisitId(visitId);
-  
+
       // Create a map to store answers by questionId for easy access
       const answerMap = new Map();
       answers.forEach((answer) => {
         answerMap.set(answer.questionId.id, answer.answer);
       });
-  
+
       // Map each question to its answer if available
       const groupedQuestions = questions.map((category) => ({
         _id: category._id,
@@ -161,16 +162,19 @@ export class VisitsService {
         updatedAt: category.updatedAt,
         questions: category.questions.map((question) => {
           const answerData = answerMap.get(question._id.toString()) || [];
-  
+
           // Extract main question answer if it exists
-          const mainAnswer = answerData.find(a => a.text === question.text)?.answer || null;
-  
+          const mainAnswer =
+            answerData.find((a) => a.text === question.text)?.answer || null;
+
           // Map sub-questions with their answers
-          const subQuestionsWithAnswers = question.subQuestions?.map((subQ) => {
-            const subAnswer = answerData.find(a => a.text === subQ.text)?.answer || null;
-            return { ...subQ, answer: subAnswer };
-          }) || [];
-  
+          const subQuestionsWithAnswers =
+            question.subQuestions?.map((subQ) => {
+              const subAnswer =
+                answerData.find((a) => a.text === subQ.text)?.answer || null;
+              return { ...subQ, answer: subAnswer };
+            }) || [];
+
           // Return the question with main answer and updated sub-questions
           return {
             ...question.toJSON(),
@@ -179,10 +183,16 @@ export class VisitsService {
           };
         }),
       }));
-  
-      return ResponseDto.success(groupedQuestions, 'Answers retrieved successfully');
+
+      return ResponseDto.success(
+        groupedQuestions,
+        'Answers retrieved successfully',
+      );
     } catch (error) {
-      this.logger.error(`Failed to retrieve answers for visitId: ${visitId}`, error.stack);
+      this.logger.error(
+        `Failed to retrieve answers for visitId: ${visitId}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Unable to retrieve answers');
     }
   }
