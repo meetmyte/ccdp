@@ -118,7 +118,6 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<ResponseDto> {
     const { identifier } = loginDto;
     const isMobile = /^\d{10}$/.test(identifier); // Assuming mobile number is 10 digits
-    await this.sendOtpBySms('+19059991744', 123456);
 
     let user: any;
     if (isMobile) {
