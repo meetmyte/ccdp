@@ -8,7 +8,9 @@ import {
   Param,
   Post,
   Request,
+  UploadedFiles,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { VisitsService } from './visits.service';
 import {
@@ -18,10 +20,12 @@ import {
   ApiParam,
   ApiBody,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { PatientGuard } from 'src/shared/guards/patient.guard';
 import { JwtAuthGuard } from 'src/shared/guards/jwt.guard';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Visits')
 @Controller('visits')
@@ -81,6 +85,74 @@ export class VisitsController {
   ): Promise<ResponseDto> {
     const patientId = req.user.userId; // Access patientId from req.user
     return this.visitsService.createVisit(patientId);
+  }
+
+  @Post('file/:visitId/answer')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Store or update an answer for a question' })
+  @ApiParam({
+    name: 'visitId',
+    required: true,
+    description: 'ID of the visit',
+    example: '672728ca0febfda4b1df5adf',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        categoryId: {
+          type: 'string',
+          description: 'ID of the question category',
+          example: '672728ca0febfda4b1df5adf',
+        },
+        questionId: {
+          type: 'string',
+          description: 'ID of the question',
+          example: '613b1d6f5fc13a001e0b4c7d',
+        },
+        frontImage: {
+          type: 'string',
+          format: 'binary',
+          description: 'Front image for pain points',
+        },
+        backImage: {
+          type: 'string',
+          format: 'binary',
+          description: 'Back image for pain points',
+        },
+      },
+    },
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({
+    status: 200,
+    description: 'Answer stored or updated successfully',
+    type: ResponseDto,
+  })
+  @UseInterceptors(
+    AnyFilesInterceptor({
+      limits: {
+        fileSize: 50 * 1024 * 1024, // 10MB limit
+      },
+    }),
+  )
+  async storeInteractiveAnswer(
+    @Param('visitId') visitId: string,
+    @Body('categoryId') categoryId: string,
+    @Body('questionId') questionId: string,
+    @UploadedFiles() files: any[],
+  ): Promise<ResponseDto> {
+    // Separate files into front and back images
+    const frontImage = files.find((file) => file.fieldname === 'frontImage');
+    const backImage = files.find((file) => file.fieldname === 'backImage');
+
+    return this.visitsService.storeInteractiveAnswer(
+      visitId,
+      categoryId,
+      questionId,
+      frontImage,
+      backImage,
+    );
   }
 
   @Post(':visitId/answer')
