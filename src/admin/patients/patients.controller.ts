@@ -16,6 +16,7 @@ import {
   ApiBody,
   ApiQuery,
   ApiBearerAuth,
+  ApiParam,
 } from '@nestjs/swagger';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { PatientsService } from './patients.service';
@@ -99,5 +100,22 @@ export class PatientsController {
   ): Promise<ResponseDto> {
     const visits = await this.patientsService.getVisitsByPatientId(patientId);
     return ResponseDto.success(visits, 'Visits list retrieved successfully');
+  }
+
+  @Get('visits/:visitId/answers')
+  @ApiOperation({ summary: 'Retrieve answers for a specific visit' })
+  @ApiParam({
+    name: 'visitId',
+    required: true,
+    description: 'ID of the visit to retrieve answers for',
+    example: '613b1d6f5fc13a001e0b4c8d',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns answers grouped by categories for a visit',
+    type: ResponseDto,
+  })
+  async getAnswers(@Param('visitId') visitId: string): Promise<ResponseDto> {
+    return this.patientsService.getAnswersByVisitId(visitId);
   }
 }

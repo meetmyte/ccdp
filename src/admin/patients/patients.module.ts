@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { PatientsController } from './patients.controller';
 import { UserRepository } from 'src/shared/repositories/user.repository';
@@ -7,9 +7,11 @@ import { HelperService } from 'src/helpers/helper.service';
 import { EmailService } from 'src/helpers/email.service';
 import { JwtService } from '@nestjs/jwt';
 import { TwilioService } from 'src/helpers/twillio.service';
+import { VisitsService } from 'src/mobile/patients/visits/visits.service';
+import { VisitsModule } from 'src/mobile/patients/visits/visits.module';
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, forwardRef(() => VisitsModule)],
   controllers: [PatientsController],
   providers: [
     PatientsService,
@@ -18,6 +20,7 @@ import { TwilioService } from 'src/helpers/twillio.service';
     EmailService,
     TwilioService,
     JwtService,
+    VisitsService,
   ],
 })
 export class PatientsModule {}

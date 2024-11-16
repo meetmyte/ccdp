@@ -13,12 +13,14 @@ import { UpdatePatientDto } from './dto/update-patient.dto';
 import { EmailService } from 'src/helpers/email.service';
 import { medicareCodeTemplate } from 'src/helpers/emails/medicare-code-template';
 import { VisitsRepository } from 'src/shared/repositories/visits.repository';
+import { VisitsService } from 'src/mobile/patients/visits/visits.service';
 
 @Injectable()
 export class PatientsService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly visitRepository: VisitsRepository,
+    private readonly visitsService: VisitsService,
     private helperService: HelperService,
     private emailService: EmailService,
   ) {}
@@ -120,6 +122,10 @@ export class PatientsService {
     );
 
     return ResponseDto.success(updatedPatient, 'Patient updated successfully');
+  }
+
+  async getAnswersByVisitId(visitId: string): Promise<any> {
+    return await this.visitsService.getAnswersByVisitId(visitId);
   }
 
   async getVisitsByPatientId(patientId: string): Promise<any[]> {

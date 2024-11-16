@@ -9,5 +9,6 @@ import { JwtStrategy } from 'src/helpers/jwt.strategy';
   imports: [SharedModule],
   controllers: [VisitsController],
   providers: [VisitsService, JwtService, JwtStrategy],
+  exports: [VisitsService],
 })
 export class VisitsModule {}

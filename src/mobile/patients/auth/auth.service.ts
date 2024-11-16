@@ -67,7 +67,6 @@ export class AuthService {
 
   async resendOtp(resendOtpDto: ResendOtpDto): Promise<ResponseDto> {
     const { mobile_no } = resendOtpDto;
-
     const patient: any = await this.userRepository.findInactiveMobile(
       mobile_no,
       false,
@@ -119,7 +118,7 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<ResponseDto> {
     const { identifier } = loginDto;
     const isMobile = /^\d{10}$/.test(identifier); // Assuming mobile number is 10 digits
-    // await this.sendOtpBySms('+15005550001', 123456);
+    await this.sendOtpBySms('+19059991744', 123456);
 
     let user: any;
     if (isMobile) {
