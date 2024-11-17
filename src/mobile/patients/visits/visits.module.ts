@@ -4,7 +4,7 @@ import { VisitsController } from './visits.controller';
 import { SharedModule } from 'src/shared/shared.module';
 import { JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from 'src/helpers/jwt.strategy';
-import { HelperService } from 'src/helpers/helper.service';
+import { HelperService } from 'src/helpers/services/helper.service';
 
 @Module({
   imports: [SharedModule],

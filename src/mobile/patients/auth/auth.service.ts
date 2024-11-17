@@ -5,10 +5,10 @@ import { VerifyPatientDto } from './dto/verify-patient.dto';
 import { ResendOtpDto } from './dto/resend-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { LoginDto } from './dto/login.dto';
-import { EmailService } from 'src/helpers/email.service';
+import { EmailService } from 'src/helpers/services/email.service';
 import { otpLoginTemplate } from 'src/helpers/emails/logn-otp-template';
 import { JwtService } from '@nestjs/jwt';
-import { TwilioService } from 'src/helpers/twillio.service';
+import { TwilioService } from 'src/helpers/services/twillio.service';
 
 @Injectable()
 export class AuthService {
@@ -78,6 +78,8 @@ export class AuthService {
     const otp = this.generateOtp();
     await this.updatePatientOtp(patient._id, otp);
 
+    await this.sendOtpBySms(patient.mobile_no, otp);
+
     return ResponseDto.success(null, 'OTP sent to the mobile number');
   }
 
@@ -140,7 +142,7 @@ export class AuthService {
     await this.userRepository.updateById(user._id, { login_otp: otp });
 
     if (isMobile) {
-      // await this.sendOtpBySms(identifier, otp);
+      await this.sendOtpBySms(identifier, otp);
     } else {
       await this.sendOtpByEmail(otp, user);
     }

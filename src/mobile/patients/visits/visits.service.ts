@@ -7,7 +7,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { ResponseDto } from 'src/helpers/dto/response.dto';
-import { HelperService } from 'src/helpers/helper.service';
+import { HelperService } from 'src/helpers/services/helper.service';
 import { AnswersRepository } from 'src/shared/repositories/answers.repository';
 import { QuestionsCategoryRepository } from 'src/shared/repositories/questions-category.repository';
 import { VisitsRepository } from 'src/shared/repositories/visits.repository';

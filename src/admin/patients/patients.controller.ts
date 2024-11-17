@@ -97,9 +97,8 @@ export class PatientsController {
   @ApiResponse({ status: 404, description: 'Patient not found or no visits' })
   async getVisitsByPatientId(
     @Param('patientId') patientId: string,
-  ): Promise<ResponseDto> {
-    const visits = await this.patientsService.getVisitsByPatientId(patientId);
-    return ResponseDto.success(visits, 'Visits list retrieved successfully');
+  ): Promise<any> {
+    return await this.patientsService.getVisitsByPatientId(patientId);
   }
 
   @Get('visits/:visitId/answers')

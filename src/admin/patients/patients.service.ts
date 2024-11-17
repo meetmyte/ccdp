@@ -5,21 +5,28 @@ import {
 } from '@nestjs/common';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UserRepository } from 'src/shared/repositories/user.repository';
-import { HelperService } from 'src/helpers/helper.service';
+import { HelperService } from 'src/helpers/services/helper.service';
 import { USER_TYPE } from 'src/helpers/enums';
 import { PaginationFilterDto } from 'src/helpers/dto/paginationFilter.dto';
 import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
-import { EmailService } from 'src/helpers/email.service';
+import { EmailService } from 'src/helpers/services/email.service';
 import { medicareCodeTemplate } from 'src/helpers/emails/medicare-code-template';
 import { VisitsRepository } from 'src/shared/repositories/visits.repository';
 import { VisitsService } from 'src/mobile/patients/visits/visits.service';
+import {
+  distressMapping,
+  g8ScoreMapping,
+  sarcFScoreMapping,
+} from 'src/helpers/signal-scoring';
+import { AnswersRepository } from 'src/shared/repositories/answers.repository';
 
 @Injectable()
 export class PatientsService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly visitRepository: VisitsRepository,
+    private readonly answerRepository: AnswersRepository,
     private readonly visitsService: VisitsService,
     private helperService: HelperService,
     private emailService: EmailService,
@@ -129,13 +136,43 @@ export class PatientsService {
   }
 
   async getVisitsByPatientId(patientId: string): Promise<any[]> {
-    const visits = await this.visitRepository.findVisitByUserId(patientId);
+    const visits = await this.visitRepository.findVisitByUserId(patientId); // Use .lean() for plain objects
     if (!visits || visits.length === 0) {
       throw new NotFoundException('No visits found for this patient');
     }
-    return visits;
-  }
 
+    const enhancedVisits = await Promise.all(
+      visits.map(async (visit: any) => {
+        const answers = await this.answerRepository.getAnswersByVisitId(
+          visit._id,
+        );
+
+        // Calculate scores and signals
+        const { g8Score, sarcFScore, distressSignal } =
+          this.calculateScoresAndSignals(answers);
+
+        return {
+          _id: visit._id,
+          patientId: visit.patientId,
+          visitId: visit.visitId,
+          date: visit.date,
+          createdAt: visit.createdAt,
+          updatedAt: visit.updatedAt,
+          scores: {
+            g8Score,
+            sarcFScore,
+          },
+          signals: {
+            g8Signal: g8Score < g8ScoreMapping.thresold,
+            sarcFSignal: sarcFScore >= sarcFScoreMapping.thresold,
+            distressSignal,
+          },
+        };
+      }),
+    );
+
+    return enhancedVisits;
+  }
   // Delete a patient
   async deletePatient(patientId: string): Promise<ResponseDto> {
     const patient = await this.userRepository.findById(patientId);
@@ -162,5 +199,51 @@ export class PatientsService {
         ),
       );
     }
+  }
+
+  private calculateScoresAndSignals(answers: any[]): {
+    g8Score: number;
+    sarcFScore: number;
+    distressSignal: boolean;
+  } {
+    let g8Score = 0;
+    let sarcFScore = 0;
+    let distressSignal = false;
+
+    answers.forEach((answer) => {
+      const questionText = answer.questionId?.text || '';
+      const userResponse = answer.answer?.[0]?.answer || '';
+
+      // Debugging logs for troubleshooting
+      console.log('Processing Question:', questionText);
+      console.log('User Response:', userResponse);
+
+      // G8 Scoring
+      if (g8ScoreMapping[questionText]) {
+        const score = g8ScoreMapping[questionText][userResponse] ?? 0;
+        g8Score += score;
+      } else {
+        console.log(`Unmapped G8 Question: ${questionText}`);
+      }
+
+      // Sarc-F Scoring
+      if (sarcFScoreMapping[questionText]) {
+        const score = sarcFScoreMapping[questionText][userResponse] ?? 0;
+        sarcFScore += score;
+      } else {
+        console.log(`Unmapped Sarc-F Question: ${questionText}`);
+      }
+
+      // Distress Signal
+      if (
+        answer.questionId?.type === 'scale' &&
+        typeof userResponse === 'number' &&
+        userResponse > distressMapping.thresold
+      ) {
+        distressSignal = true;
+      }
+    });
+
+    return { g8Score, sarcFScore, distressSignal };
   }
 }
