@@ -59,6 +59,7 @@ export class PatientsService {
       mobile_no: createPatientDto.mobile,
       gender: createPatientDto.gender,
       date_of_birth: createPatientDto.date_of_birth,
+      medicare_code: createPatientDto.medicare_code,
       role: USER_TYPE.PATIENT,
       is_invited: true,
     });
