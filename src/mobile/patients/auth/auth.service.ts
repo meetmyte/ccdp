@@ -142,7 +142,16 @@ export class AuthService {
     await this.userRepository.updateById(user._id, { login_otp: otp });
 
     if (isMobile) {
-      await this.sendOtpBySms(identifier, otp);
+      // TODO: uncomment after the testing is done.
+      // try {
+      //   await this.sendOtpBySms(`+1${identifier}`, otp);
+      // } catch (e) {
+      //   console.log('🚀 ~ AuthService ~ login ~ e:', e);
+      //   return ResponseDto.error(
+      //     'Invalid mobile number provided. Please ensure the number is in the correct format for the Canada region.',
+      //     500,
+      //   );
+      // }
     } else {
       await this.sendOtpByEmail(otp, user);
     }

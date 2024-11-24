@@ -276,14 +276,16 @@ export class VisitsService {
           // Extract main question answer if it exists
           let mainAnswer = null;
           if (question.type === 'interactive_image') {
-            mainAnswer = {
-              frontImage:
-                answerData.find((a) => a.text === question.text)?.answer
-                  ?.frontImage || null,
-              backImage:
-                answerData.find((a) => a.text === question.text)?.answer
-                  ?.backImage || null,
-            };
+            // mainAnswer = {
+            //   frontImage:
+            //     answerData.find((a) => a.text === question.text)?.answer
+            //       ?.frontImage || null,
+            //   backImage:
+            //     answerData.find((a) => a.text === question.text)?.answer
+            //       ?.backImage || null,
+            // };
+            mainAnswer =
+              answerData.find((a) => a.text === question.text)?.answer || null;
           } else {
             mainAnswer =
               answerData.find((a) => a.text === question.text)?.answer || null;

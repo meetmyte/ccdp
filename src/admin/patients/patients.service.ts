@@ -136,10 +136,10 @@ export class PatientsService {
     return await this.visitsService.getAnswersByVisitId(visitId);
   }
 
-  async getVisitsByPatientId(patientId: string): Promise<any[]> {
+  async getVisitsByPatientId(patientId: string): Promise<any> {
     const visits = await this.visitRepository.findVisitByUserId(patientId); // Use .lean() for plain objects
     if (!visits || visits.length === 0) {
-      throw new NotFoundException('No visits found for this patient');
+      return ResponseDto.badRequest(null, 'No visits found');
     }
 
     const enhancedVisits = await Promise.all(
@@ -172,7 +172,7 @@ export class PatientsService {
       }),
     );
 
-    return enhancedVisits;
+    return ResponseDto.success(enhancedVisits, 'Visits fetched successfully');
   }
   // Delete a patient
   async deletePatient(patientId: string): Promise<ResponseDto> {
@@ -239,7 +239,8 @@ export class PatientsService {
       if (
         answer.questionId?.type === 'scale' &&
         typeof userResponse === 'number' &&
-        userResponse > distressMapping.thresold
+        userResponse > distressMapping.thresold &&
+        answer.categoryId.name === 'Distress Screening'
       ) {
         distressSignal = true;
       }
