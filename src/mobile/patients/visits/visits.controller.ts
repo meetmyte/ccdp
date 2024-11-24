@@ -258,4 +258,26 @@ export class VisitsController {
   async getAnswers(@Param('visitId') visitId: string): Promise<ResponseDto> {
     return this.visitsService.getAnswersByVisitId(visitId);
   }
+
+  @Get(':visitId/profile')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Generate AI-generated patient profile based on answers',
+  })
+  @ApiParam({
+    name: 'visitId',
+    required: true,
+    description: 'ID of the visit to retrieve answers for and generate profile',
+    example: '613b1d6f5fc13a001e0b4c8d',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns an AI-generated patient profile',
+    type: ResponseDto,
+  })
+  async generateProfile(
+    @Param('visitId') visitId: string,
+  ): Promise<ResponseDto> {
+    return await this.visitsService.generatePatientProfile(visitId);
+  }
 }

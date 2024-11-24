@@ -12,6 +12,7 @@ import { VisitsRepository } from './repositories/visits.repository';
 import { AnswersRepository } from './repositories/answers.repository';
 import { Visit, VisitsSchema } from './schemas/visits.schema';
 import { Answer, AnswerSchema } from './schemas/answers.schema';
+import { OpenAiService } from './service/openai.service';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { Answer, AnswerSchema } from './schemas/answers.schema';
     QuestionsCategoryRepository,
     VisitsRepository,
     AnswersRepository,
+    OpenAiService
   ],
   exports: [
     MongooseModule,
@@ -35,6 +37,7 @@ import { Answer, AnswerSchema } from './schemas/answers.schema';
     QuestionsCategoryRepository,
     VisitsRepository,
     AnswersRepository,
+    OpenAiService
   ], // Exporting MongooseModule and UserRepository
 })
 export class SharedModule {}
