@@ -20,7 +20,7 @@ export class VisitsService {
     private readonly questionsCategoryRepository: QuestionsCategoryRepository,
     private readonly visitRepository: VisitsRepository,
     private readonly answerRepository: AnswersRepository,
-    private openAiService: OpenAiService
+    private openAiService: OpenAiService,
   ) {}
 
   async getAllQuestions(): Promise<ResponseDto> {
@@ -137,14 +137,15 @@ export class VisitsService {
       throw new InternalServerErrorException('Unable to retrieve answers');
     }
   }
-    
+
   async generatePatientProfile(visitId: string): Promise<any> {
     try {
       // Step 1: Retrieve answers for the given visitId
-      const answers: any = await this.answerRepository.getAnswersByVisitId(visitId);
+      const answers: any =
+        await this.answerRepository.getAnswersByVisitId(visitId);
 
       if (!answers.length) {
-        throw new NotFoundException('No answers found for this visit');
+        return ResponseDto.badRequest(null, 'Visit id not found');
       }
 
       // Step 2: Group answers by categories
@@ -171,25 +172,81 @@ export class VisitsService {
         return acc;
       }, []);
 
-
       const profile = await this.generatePatientProfileUsingAi(groupedAnswers);
 
       // Step 3: Use the AI service to generate a profile based on grouped answers
       // const aiProfile = await this.aiService.generateProfile(groupedAnswers);
 
-       return ResponseDto.success(
-        profile,
-        'Profile retrieved successfully',
-      );// Return the generated profile
+      return ResponseDto.success(profile, 'Profile retrieved successfully'); // Return the generated profile
     } catch (error) {
-      throw new InternalServerErrorException('Failed to generate patient profile');
+      throw new InternalServerErrorException(
+        'Failed to generate patient profile',
+      );
     }
   }
+
+  // async generatePatientProfileUsingAi(patientData) {
+  //   try {
+  //     const openai = this.openAiService.getClient(); // Get the OpenAI client
+
+  //     const promptTemplate = `
+  //     You are an advanced medical assistant AI. Based on the following patient responses, generate a detailed, coherent, and descriptive health profile suitable for both doctors and patients. The profile should be structured in a natural, narrative format, with a minimum length of 1000 characters. Use medical terminology and phrasing that a doctor would find insightful and professionally appropriate. The language should clearly outline the patient's health status and observations, facilitating diagnosis and treatment planning.
+
+  //     Highlight each health category in detail, ensuring:
+  //     1. A well-articulated summary that interprets the patient's condition in medical terms, integrating relevant clinical insights.
+  //     2. Observations that specify patient-reported data or symptoms and their potential clinical implications.
+  //     3. A section on critical insights that identifies areas requiring immediate medical attention or further diagnostic workup.
+
+  //     Additionally, provide the profile in a structured JSON format suitable for frontend rendering. The JSON should include:
+  //     1. A \`categories\` array, where each category contains:
+  //        - \`categoryName\`: The name of the category (e.g., "Reason for Visit").
+  //        - \`summary\`: A detailed narrative summary in doctor-appropriate language.
+  //        - \`observations\`: A list of key points or findings from the patient's responses.
+  //        - \`criticalInsights\`: A list of important notes or actionable insights requiring attention.
+
+  //     2. An \`overallInsights\` field, which provides a high-level, medically descriptive summary of the patient’s condition, highlighting critical concerns and actionable recommendations for diagnosis or treatment.
+
+  //     Patient Data:
+  //     ${JSON.stringify(patientData, null, 2)}
+  //     `;
+
+  //     const assistantContext =
+  //       'Please write a detailed patient health profile in a structured JSON format, organizing the content by health categories with descriptive text. Ensure each category is clearly labeled and includes relevant responses.';
+
+  //     const response = await openai.chat.completions.create({
+  //       model: 'gpt-4o',
+  //       messages: [
+  //         { role: 'system', content: assistantContext },
+  //         { role: 'user', content: promptTemplate },
+  //       ],
+  //     });
+
+  //     const profileText = response.choices[0].message.content;
+  //     console.log('profileText', profileText);
+  //     try {
+  //       return ResponseDto.success(JSON.parse(profileText), 'success');
+  //     } catch (error) {
+  //       console.log(
+  //         '🚀 ~ VisitsService ~ generatePatientProfileUsingAi ~ error:',
+  //         error,
+  //       );
+  //       return {
+  //         error: 'Response could not be formatted as JSON',
+  //         content: profileText,
+  //       };
+  //     }
+  //   } catch (error) {
+  //     console.error('Error generating patient profile:', error);
+  //     throw new InternalServerErrorException(
+  //       'Failed to generate patient profile',
+  //     );
+  //   }
+  // }
 
   async generatePatientProfileUsingAi(patientData) {
     try {
       const openai = this.openAiService.getClient(); // Get the OpenAI client
-  
+
       const promptTemplate = `
       You are an advanced medical assistant AI. Based on the following patient responses, generate a detailed, coherent, and descriptive health profile suitable for both doctors and patients. The profile should be structured in a natural, narrative format, with a minimum length of 1000 characters. Use medical terminology and phrasing that a doctor would find insightful and professionally appropriate. The language should clearly outline the patient's health status and observations, facilitating diagnosis and treatment planning.
       
@@ -210,11 +267,10 @@ export class VisitsService {
       Patient Data:
       ${JSON.stringify(patientData, null, 2)}
       `;
-        
+
       const assistantContext =
         'Please write a detailed patient health profile in a structured JSON format, organizing the content by health categories with descriptive text. Ensure each category is clearly labeled and includes relevant responses.';
-  
-      debugger
+
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -222,22 +278,35 @@ export class VisitsService {
           { role: 'user', content: promptTemplate },
         ],
       });
-  
+
+      // Extract raw content from response
       const profileText = response.choices[0].message.content;
-      console.log('profileText',profileText)
+
+      console.log('Raw profileText:', profileText);
+
+      // Clean the response to remove code fences and extra formatting
+      const cleanedProfileText = profileText
+        .replace(/```json\n|```/g, '')
+        .trim();
+
+      console.log('Cleaned profileText:', cleanedProfileText);
+
+      // Try parsing the cleaned response as JSON
       try {
-        return JSON.parse(profileText);
+        const parsedJson = JSON.parse(cleanedProfileText);
+        return parsedJson;
       } catch (error) {
+        console.error('JSON Parsing Error:', error);
         return {
           error: 'Response could not be formatted as JSON',
-          content: profileText,
+          content: cleanedProfileText,
         };
       }
     } catch (error) {
       console.error('Error generating patient profile:', error);
-      throw new InternalServerErrorException('Failed to generate patient profile');
+      throw new InternalServerErrorException(
+        'Failed to generate patient profile',
+      );
     }
   }
-
-
 }
