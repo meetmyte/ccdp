@@ -182,10 +182,20 @@ export default [
             text: 'Please specify your drug consumption',
             type: 'mixed',
             options: ['cannabis', 'cocaine', 'heroin'],
-            additionalText: 'any other drugs?',
+          },
+          {
+            text: 'any other drugs?',
+            type: 'text',
+          },
+          {
+            text: 'times',
+            type: 'number',
             timeUnit: ['per month', 'per week', 'per day', 'per year'],
           },
-          { text: "No, I don't consume any drugs", type: 'boolean' },
+          {
+            text: "No, I don't consume any drugs",
+            type: 'boolean',
+          },
         ],
       },
       {

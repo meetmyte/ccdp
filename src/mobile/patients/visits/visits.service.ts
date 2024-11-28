@@ -278,14 +278,6 @@ export class VisitsService {
           // Extract main question answer if it exists
           let mainAnswer = null;
           if (question.type === 'interactive_image') {
-            // mainAnswer = {
-            //   frontImage:
-            //     answerData.find((a) => a.text === question.text)?.answer
-            //       ?.frontImage || null,
-            //   backImage:
-            //     answerData.find((a) => a.text === question.text)?.answer
-            //       ?.backImage || null,
-            // };
             mainAnswer =
               answerData.find((a) => a.text === question.text)?.answer || null;
           } else {
@@ -296,17 +288,30 @@ export class VisitsService {
           // Map sub-questions with their answers
           const subQuestionsWithAnswers =
             question.subQuestions?.map((subQ) => {
-              const subAnswer =
-                answerData.find((a) => a.text === subQ.text)?.answer || null;
-              return { ...subQ, answer: subAnswer };
+              const subAnswer = answerData.find(
+                (a) => a.text === subQ.text,
+              )?.answer;
+              // If the answer is an empty string, return '' instead of null
+              return {
+                ...subQ,
+                answer: subAnswer === '' ? '' : subAnswer || null,
+              };
             }) || [];
 
-          // Return the question with main answer and updated sub-questions
-          return {
+          // Prepare the question object
+          const questionObject = {
             ...question.toJSON(),
-            answer: mainAnswer,
             subQuestions: subQuestionsWithAnswers,
           };
+
+          // Remove the answer key if there are sub-questions
+          if (subQuestionsWithAnswers.length > 0) {
+            delete questionObject.answer;
+          } else {
+            questionObject.answer = mainAnswer;
+          }
+
+          return questionObject;
         }),
       }));
 
