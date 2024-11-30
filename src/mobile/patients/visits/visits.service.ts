@@ -291,10 +291,11 @@ export class VisitsService {
               const subAnswer = answerData.find(
                 (a) => a.text === subQ.text,
               )?.answer;
-              // If the answer is an empty string, return '' instead of null
+
+              // Ensure `false` or empty string values are preserved correctly
               return {
                 ...subQ,
-                answer: subAnswer === '' ? '' : subAnswer || null,
+                answer: subAnswer !== undefined ? subAnswer : null,
               };
             }) || [];
 
