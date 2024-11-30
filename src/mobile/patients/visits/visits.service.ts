@@ -376,6 +376,7 @@ export class VisitsService {
       }, []);
 
       const profile = await this.generatePatientProfileUsingAi(groupedAnswers);
+      await this.visitRepository.updateVisit(visitId, { summary: profile });
 
       // Step 3: Use the AI service to generate a profile based on grouped answers
       // const aiProfile = await this.aiService.generateProfile(groupedAnswers);

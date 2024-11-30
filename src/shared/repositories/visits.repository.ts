@@ -22,4 +22,16 @@ export class VisitsRepository {
   async findVisitByUserId(usreId: string): Promise<Visit[]> {
     return this.visitModel.find({ patientId: usreId }).exec();
   }
+
+  async updateVisit(
+    visitId: string,
+    updateData: Partial<Visit>,
+  ): Promise<Visit | null> {
+    return await this.visitModel
+      .findByIdAndUpdate(visitId, updateData, {
+        new: true,
+        runValidators: true,
+      })
+      .exec();
+  }
 }

@@ -13,6 +13,9 @@ export class Visit {
 
   @Prop({ default: Date.now })
   date: Date;
+
+  @Prop({ type: Object, required: false, default: null }) // Add the summary field
+  summary?: Record<string, any>; // Use Record to allow storing JSON
 }
 
 export const VisitsSchema = SchemaFactory.createForClass(Visit);
