@@ -304,7 +304,6 @@ export class VisitsService {
             ...question.toJSON(),
             subQuestions: subQuestionsWithAnswers,
           };
-
           // Remove the answer key if there are sub-questions
           if (subQuestionsWithAnswers.length > 0) {
             delete questionObject.answer;

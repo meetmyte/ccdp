@@ -1,6 +1,7 @@
 // src/schemas/question.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { encryptionPlugin } from '../plugins/encryption.plugin';
 
 export type QuestionDocument = Question & Document;
 
@@ -85,3 +86,17 @@ export class Question {
 }
 
 export const QuestionSchema = SchemaFactory.createForClass(Question);
+
+QuestionSchema.plugin(encryptionPlugin, {
+  fields: [
+    'text',
+    'type',
+    'placeholder',
+    'subQuestions.text',
+    'subQuestions.type',
+    'subQuestions.unit',
+    'subQuestions.additionalText',
+    'subQuestions.timeUnit',
+    'description',
+  ],
+});

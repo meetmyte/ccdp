@@ -1,6 +1,6 @@
-// src/shared/schemas/answers.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { encryptionPlugin } from '../plugins/encryption.plugin';
 
 export type AnswerDocument = Answer & Document;
 
@@ -15,12 +15,8 @@ export class Answer {
   @Prop({ type: Types.ObjectId, ref: 'Question', required: true })
   questionId: Types.ObjectId;
 
-  @Prop({ type: [Object], default: null })
-  answer: Array<{
-    text: string;
-    answer: string | number | boolean;
-    unit?: string;
-  }>;
+  @Prop({ type: String }) // Field will be encrypted via plugin
+  answer: string;
 
   @Prop({ default: Date.now })
   createdAt?: Date;
@@ -30,3 +26,6 @@ export class Answer {
 }
 
 export const AnswerSchema = SchemaFactory.createForClass(Answer);
+
+// Apply the encryption plugin
+AnswerSchema.plugin(encryptionPlugin, { fields: ['answer'] });

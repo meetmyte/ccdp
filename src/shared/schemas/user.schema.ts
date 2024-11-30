@@ -2,8 +2,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { USER_TYPE } from 'src/helpers/enums';
-import * as dotEnv from 'dotenv';
-dotEnv.config();
+import { encryptionPlugin } from '../plugins/encryption.plugin';
 
 export type UserDocument = User & Document;
 
@@ -43,16 +42,29 @@ export class User {
   hospital_code: string;
 
   @Prop({ default: null })
-  mobile_no: number;
+  mobile_no: string;
 
   @Prop({ required: false, default: null })
   gender: string;
 
   @Prop({ required: false, default: null })
-  date_of_birth: Date;
+  date_of_birth: string;
 
   @Prop({ default: false })
   is_mobile_verified: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.plugin(encryptionPlugin, {
+  fields: [
+    'first_name',
+    'last_name',
+    'email',
+    'medicare_code',
+    'hospital_code',
+    'mobile_no',
+    'gender',
+    'date_of_birth',
+    'mobile_no',
+  ],
+});

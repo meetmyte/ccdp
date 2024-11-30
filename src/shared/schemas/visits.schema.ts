@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { encryptionPlugin } from '../plugins/encryption.plugin';
 
 export type VisitDocument = Visit & Document;
 
@@ -19,3 +20,4 @@ export class Visit {
 }
 
 export const VisitsSchema = SchemaFactory.createForClass(Visit);
+VisitsSchema.plugin(encryptionPlugin, { fields: ['summary'] });

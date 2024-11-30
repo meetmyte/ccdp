@@ -22,9 +22,9 @@ export class VerifyPatientDto {
     description: 'Mobile number of the patient',
     example: '+15020039938',
   })
-  @IsNotEmpty()
+  @IsString()
   // @IsMobilePhone() // Validate as a mobile phone number
-  mobile_no: number;
+  mobile_no: string;
 
   @ApiProperty({
     description: 'Medicare Number',
@@ -40,7 +40,7 @@ export class VerifyPatientDto {
   })
   @IsNotEmpty()
   @IsDateString()
-  date_of_birth: Date;
+  date_of_birth: string;
 
   @ApiProperty({
     description: 'Gender of the patient',

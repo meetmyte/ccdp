@@ -58,7 +58,7 @@ export class AnswersRepository {
       })
       .exec();
 
-    console.log('Populated Answers:', answers);
+    console.log('Populated Answers:', JSON.stringify(answers));
     return answers;
   }
 }

@@ -1,6 +1,7 @@
 // src/schemas/category.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { encryptionPlugin } from '../plugins/encryption.plugin';
 
 export type CategoryDocument = QuestionCategories & Document;
 
@@ -14,3 +15,5 @@ export class QuestionCategories {
 }
 
 export const CategorySchema = SchemaFactory.createForClass(QuestionCategories);
+
+CategorySchema.plugin(encryptionPlugin, { fields: ['name'] });
