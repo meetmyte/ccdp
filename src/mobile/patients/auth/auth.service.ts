@@ -120,7 +120,6 @@ export class AuthService {
   async login(loginDto: LoginDto): Promise<ResponseDto> {
     const { identifier } = loginDto;
     const isMobile = /^\d{10}$/.test(identifier); // Assuming mobile number is 10 digits
-
     let user: any;
     if (isMobile) {
       user = await this.userRepository.findInactiveMobile(identifier);
@@ -143,15 +142,15 @@ export class AuthService {
 
     if (isMobile) {
       // TODO: uncomment after the testing is done.
-      // try {
-      //   await this.sendOtpBySms(`+1${identifier}`, otp);
-      // } catch (e) {
-      //   console.log('🚀 ~ AuthService ~ login ~ e:', e);
-      //   return ResponseDto.error(
-      //     'Invalid mobile number provided. Please ensure the number is in the correct format for the Canada region.',
-      //     500,
-      //   );
-      // }
+      try {
+        await this.sendOtpBySms(`+1${identifier}`, otp);
+      } catch (e) {
+        console.log('🚀 ~ AuthService ~ login ~ e:', e);
+        return ResponseDto.error(
+          'Invalid mobile number provided. Please ensure the number is in the correct format for the Canada region.',
+          500,
+        );
+      }
     } else {
       await this.sendOtpByEmail(otp, user);
     }
