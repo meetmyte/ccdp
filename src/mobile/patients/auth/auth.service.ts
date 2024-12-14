@@ -20,8 +20,8 @@ export class AuthService {
   ) {}
 
   private generateOtp(): number {
-    // return Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit numeric OTP
-    return 123123;
+    return Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit numeric OTP
+    // return 123123;
   }
 
   private async updatePatientOtp(
@@ -62,6 +62,7 @@ export class AuthService {
     await this.updatePatientOtp(patient._id, otp);
     await this.userRepository.updateById(patient._id, { ...payload, otp });
 
+    await this.sendOtpBySms(patient.mobile_no, otp);
     return ResponseDto.success(null, 'OTP sent to the mobile number');
   }
 
