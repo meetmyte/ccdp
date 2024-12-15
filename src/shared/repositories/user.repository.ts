@@ -8,6 +8,9 @@ import { USER_TYPE } from 'src/helpers/enums';
 export class UserRepository {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
+  async getTable() {
+    return await this.userModel;
+  }
   // Create a new user
   async create(userData: Partial<User>): Promise<User> {
     const user = new this.userModel(userData);
@@ -20,7 +23,10 @@ export class UserRepository {
   }
 
   // Generic method to fetch all users with pagination, filters, and sorting
-  async findAll(paginationFilterDto: any): Promise<any> {
+  async findAll(
+    paginationFilterDto: any,
+    role: USER_TYPE = USER_TYPE.PATIENT,
+  ): Promise<any> {
     const {
       page = 1,
       limit = 10,
@@ -30,7 +36,7 @@ export class UserRepository {
     } = paginationFilterDto;
 
     // Create the query object using dynamic filters
-    const query: any = { role: USER_TYPE.PATIENT };
+    const query: any = { role };
 
     Object.keys(filters).forEach((key) => {
       // Use regex for string fields to make searches case-insensitive

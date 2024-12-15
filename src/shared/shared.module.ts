@@ -13,6 +13,16 @@ import { AnswersRepository } from './repositories/answers.repository';
 import { Visit, VisitsSchema } from './schemas/visits.schema';
 import { Answer, AnswerSchema } from './schemas/answers.schema';
 import { OpenAiService } from './service/openai.service';
+import { DoctorPatientAssignmentRepository } from './repositories/doctor-patients.repository';
+import {
+  DoctorPatientAssignment,
+  DoctorPatientAssignmentSchema,
+} from './schemas/doctor-patients-assignments.schema';
+import {
+  Consultation,
+  ConsultationSchema,
+} from './schemas/consultations.schema';
+import { ConsultationRepository } from './repositories/consultation.repository';
 
 @Module({
   imports: [
@@ -22,6 +32,14 @@ import { OpenAiService } from './service/openai.service';
       { name: Question.name, schema: QuestionSchema },
       { name: Visit.name, schema: VisitsSchema },
       { name: Answer.name, schema: AnswerSchema },
+      {
+        name: DoctorPatientAssignment.name,
+        schema: DoctorPatientAssignmentSchema,
+      },
+      {
+        name: Consultation.name,
+        schema: ConsultationSchema,
+      },
     ]),
   ],
   providers: [
@@ -29,7 +47,9 @@ import { OpenAiService } from './service/openai.service';
     QuestionsCategoryRepository,
     VisitsRepository,
     AnswersRepository,
-    OpenAiService
+    OpenAiService,
+    DoctorPatientAssignmentRepository,
+    ConsultationRepository,
   ],
   exports: [
     MongooseModule,
@@ -37,7 +57,9 @@ import { OpenAiService } from './service/openai.service';
     QuestionsCategoryRepository,
     VisitsRepository,
     AnswersRepository,
-    OpenAiService
+    OpenAiService,
+    DoctorPatientAssignmentRepository,
+    ConsultationRepository,
   ], // Exporting MongooseModule and UserRepository
 })
 export class SharedModule {}
