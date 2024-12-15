@@ -90,7 +90,7 @@ export class UserRepository {
   }
 
   async findInactiveMobile(mobile_no, is_active = true) {
-    return await this.userModel.findOne({ mobile_no, role: USER_TYPE.PATIENT });
+    return await this.userModel.findOne({ mobile_no });
   }
 
   async findByMobileOrEmail(
