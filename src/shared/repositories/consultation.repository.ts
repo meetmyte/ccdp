@@ -80,7 +80,15 @@ export class ConsultationRepository {
 
     const parsedFilters = filters ? JSON.parse(filters) : {};
 
-    const query = { doctorId, ...parsedFilters };
+    // here i need to check that if the parsed filter has the patientId then need to convert it into the objectid
+    if (parsedFilters.patientId) {
+      parsedFilters.patientId = new Types.ObjectId(parsedFilters.patientId);
+    }
+
+    const query = {
+      doctorId: new Types.ObjectId(doctorId),
+      ...parsedFilters,
+    };
 
     const consultations = await this.consultationModel
       .find(query)

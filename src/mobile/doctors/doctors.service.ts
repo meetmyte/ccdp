@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { UserRepository } from 'src/shared/repositories/user.repository';
@@ -13,6 +14,7 @@ import { CreateConsultationDto } from './dto/create-consultation.dto';
 import { UpdateConsultationDto } from './dto/update-consultation.dto';
 import { Types } from 'mongoose';
 import { VisitsService } from '../patients/visits/visits.service';
+import { OpenAiService } from 'src/shared/service/openai.service';
 
 @Injectable()
 export class DoctorsService {
@@ -21,6 +23,7 @@ export class DoctorsService {
     private readonly userRepository: UserRepository,
     private readonly consultationRepository: ConsultationRepository,
     private readonly visitsService: VisitsService,
+    private readonly openAiService: OpenAiService,
   ) {}
 
   async assignPatientToDoctor(
@@ -138,6 +141,11 @@ export class DoctorsService {
       visitId: new Types.ObjectId(visitId),
     };
 
+    if (rest.conversation) {
+      rest.consultationSummary = await this.generateDoctorSummaryUsingAi(
+        rest.conversation,
+      );
+    }
     const consultation =
       await this.consultationRepository.createConsultation(consultationData);
     return ResponseDto.success(consultation, 'Consultation added successfully');
@@ -233,6 +241,25 @@ export class DoctorsService {
     }
   }
 
+  async storeAnswer(
+    visitId: string,
+    categoryId: string,
+    questionId: string,
+    answer: any,
+  ) {
+    try {
+      const result = await this.visitsService.storeAnswer(
+        visitId,
+        categoryId,
+        questionId,
+        answer,
+      );
+      return ResponseDto.success(result, 'Answer stored successfully');
+    } catch (error) {
+      return ResponseDto.error(error.message || 'Something went wrong.', 500);
+    }
+  }
+
   async getDashboardMetrics(doctorId: string): Promise<ResponseDto> {
     try {
       // 1. Get the total number of consultations for the doctor
@@ -253,6 +280,132 @@ export class DoctorsService {
     } catch (error) {
       // Handle any errors gracefully
       return ResponseDto.error(error.message || 'Something went wrong.', 500);
+    }
+  }
+
+  async getAnswersByVisitId(visitId: string): Promise<ResponseDto> {
+    try {
+      const answers = await this.visitsService.getAnswersByVisitId(visitId);
+      return ResponseDto.success(answers, 'Answers retrieved successfully.');
+    } catch (error) {
+      return ResponseDto.error(error.message || 'Something went wrong.', 500);
+    }
+  }
+
+  async generatePatientProfile(visitId: string): Promise<ResponseDto> {
+    try {
+      const answers = await this.visitsService.generatePatientProfile(visitId);
+      return ResponseDto.success(answers, 'Answers retrieved successfully.');
+    } catch (error) {
+      return ResponseDto.error(error.message || 'Something went wrong.', 500);
+    }
+  }
+
+  // async generateDoctorSummaryUsingAi(doctorConversation: string): Promise<any> {
+  //   try {
+  //     const openai = this.openAiService.getClient(); // Get the OpenAI client
+
+  //     const promptTemplate = `
+  //     You are an advanced medical assistant AI. Based on the following doctor's consultation conversation, generate a detailed and coherent summary suitable for both the patient and medical professionals. The summary should highlight the key points discussed during the consultation and provide actionable insights where applicable.
+
+  //     Ensure the summary includes the following:
+  //     1. A structured narrative that clearly outlines the doctor's observations, advice, and recommended actions in a professional and easy-to-understand language.
+  //     2. Key medical insights and observations drawn from the consultation.
+  //     3. A section for follow-up recommendations or additional diagnostics/tests, if mentioned in the conversation.
+
+  //     Additionally, provide the summary in a structured JSON format suitable for frontend rendering. The JSON should include:
+  //     1. A \`summary\` field that contains the detailed narrative summary.
+  //     2. A \`keyPoints\` array, listing the major takeaways from the conversation.
+  //     3. A \`recommendations\` field for any follow-ups or actionable items.
+
+  //     Doctor's Consultation:
+  //     ${doctorConversation}
+  //     `;
+
+  //     const assistantContext =
+  //       'Generate a structured summary of the doctor’s conversation in JSON format, highlighting key points and follow-up recommendations.';
+
+  //     const response = await openai.chat.completions.create({
+  //       model: 'gpt-4o',
+  //       messages: [
+  //         { role: 'system', content: assistantContext },
+  //         { role: 'user', content: promptTemplate },
+  //       ],
+  //     });
+
+  //     // Extract raw content from response
+  //     const summaryText = response.choices[0].message.content;
+
+  //     console.log('Raw summaryText:', summaryText);
+
+  //     // Clean the response to remove code fences and extra formatting
+  //     const cleanedSummaryText = summaryText
+  //       .replace(/```json\n|```/g, '')
+  //       .trim();
+
+  //     console.log('Cleaned summaryText:', cleanedSummaryText);
+
+  //     // Try parsing the cleaned response as JSON
+  //     try {
+  //       const parsedJson = JSON.parse(cleanedSummaryText);
+  //       return parsedJson;
+  //     } catch (error) {
+  //       console.error('JSON Parsing Error:', error);
+  //       return {
+  //         error: 'Response could not be formatted as JSON',
+  //         content: cleanedSummaryText,
+  //       };
+  //     }
+  //   } catch (error) {
+  //     console.error('Error generating doctor summary:', error);
+  //     throw new InternalServerErrorException(
+  //       'Failed to generate doctor summary',
+  //     );
+  //   }
+  // }
+
+  async generateDoctorSummaryUsingAi(
+    doctorConversation: string,
+  ): Promise<string> {
+    try {
+      const openai = this.openAiService.getClient(); // Get the OpenAI client
+
+      const promptTemplate = `
+      You are an advanced medical assistant AI. Based on the following doctor's consultation conversation, generate a detailed and coherent summary suitable for both the patient and medical professionals. The summary should highlight the key points discussed during the consultation and provide actionable insights where applicable.
+  
+      Ensure the summary includes the following:
+      1. A structured narrative that clearly outlines the doctor's observations, advice, and recommended actions in a professional and easy-to-understand language.
+      2. Key medical insights and observations drawn from the consultation.
+      3. A section for follow-up recommendations or additional diagnostics/tests, if mentioned in the conversation.
+  
+      Provide the summary as a single paragraph suitable for inclusion in a medical record.
+  
+      Doctor's Consultation:
+      ${doctorConversation}
+      `;
+
+      const assistantContext =
+        'Generate a structured and detailed summary of the doctor’s conversation as a single paragraph, highlighting observations, advice, and recommendations.';
+
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: assistantContext },
+          { role: 'user', content: promptTemplate },
+        ],
+      });
+
+      // Extract raw content from response
+      const summaryText = response.choices[0].message.content.trim();
+
+      console.log('Generated Summary:', summaryText);
+
+      return summaryText;
+    } catch (error) {
+      console.error('Error generating doctor summary:', error);
+      throw new InternalServerErrorException(
+        'Failed to generate doctor summary',
+      );
     }
   }
 }

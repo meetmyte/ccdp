@@ -2,13 +2,14 @@ import {
   Controller,
   Post,
   Body,
-  Request,
   UseGuards,
   Get,
   Query,
   Delete,
   Param,
   Patch,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { DoctorsService } from './doctors.service';
 import { AssignPatientDto } from './dto/assign-patient.dto';
@@ -22,6 +23,7 @@ import {
   ApiBearerAuth,
   ApiQuery,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { PaginationFilterDto } from 'src/helpers/dto/paginationFilter.dto';
 import { CreateConsultationDto } from './dto/create-consultation.dto';
@@ -29,7 +31,7 @@ import { UpdateConsultationDto } from './dto/update-consultation.dto';
 
 @ApiTags('Doctors (Mobile)')
 @ApiBearerAuth()
-// @UseGuards(JwtAuthGuard, DoctorGuard)
+@UseGuards(JwtAuthGuard, DoctorGuard)
 @Controller('doctors')
 export class DoctorsController {
   constructor(private readonly doctorsService: DoctorsService) {}
@@ -103,7 +105,7 @@ export class DoctorsController {
     return this.doctorsService.addConsultation(createConsultationDto);
   }
 
-  @Get('consultation/list')
+  @Get('consultation/list/:doctorId')
   @ApiOperation({
     summary: 'List consultations for the logged-in doctor with filters',
   })
@@ -142,11 +144,18 @@ export class DoctorsController {
     description: 'Consultations list retrieved successfully',
     type: ResponseDto,
   })
+  @ApiParam({
+    name: 'doctorId',
+    type: 'string',
+    required: true,
+    description:
+      'The ID of the doctor whose assigned patients are being listed.',
+    example: '647f1d6eb9b123456789abcd',
+  })
   async listConsultations(
-    @Request() req,
+    @Param('doctorId') doctorId: string,
     @Query() paginationFilterDto: PaginationFilterDto,
   ): Promise<ResponseDto> {
-    const doctorId = req.user.userId; // Assuming doctor ID comes from the token
     return this.doctorsService.listConsultationsByDoctorId(
       doctorId,
       paginationFilterDto,
@@ -218,6 +227,23 @@ export class DoctorsController {
     return await this.doctorsService.getVisitsByPatientId(doctorId, patientId);
   }
 
+  @Get('visit/:visitId/answers')
+  @ApiOperation({ summary: 'Retrieve answers for a specific visit' })
+  @ApiParam({
+    name: 'visitId',
+    required: true,
+    description: 'ID of the visit to retrieve answers for',
+    example: '613b1d6f5fc13a001e0b4c8d',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns answers grouped by categories for a visit',
+    type: ResponseDto,
+  })
+  async getAnswers(@Param('visitId') visitId: string): Promise<ResponseDto> {
+    return this.doctorsService.getAnswersByVisitId(visitId);
+  }
+
   @Get('dashboard/:doctorId')
   @ApiOperation({ summary: 'Get doctor dashboard metrics' })
   @ApiResponse({
@@ -229,5 +255,77 @@ export class DoctorsController {
     @Param('doctorId') doctorId: string,
   ): Promise<ResponseDto> {
     return this.doctorsService.getDashboardMetrics(doctorId);
+  }
+
+  @Post(':visitId/answer')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Store or update an answer for a question' })
+  @ApiParam({
+    name: 'visitId',
+    required: true,
+    description: 'ID of the visit',
+    example: '672728ca0febfda4b1df5adf',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        categoryId: {
+          type: 'string',
+          description: 'ID of the question category',
+          example: '672728ca0febfda4b1df5adf',
+        },
+        questionId: {
+          type: 'string',
+          description: 'ID of the question',
+          example: '613b1d6f5fc13a001e0b4c7d',
+        },
+        answer: {
+          type: 'string',
+          description: 'Answer to the question',
+          example: 'Not feeling well',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Answer stored or updated successfully',
+    type: ResponseDto,
+  })
+  async storeAnswer(
+    @Param('visitId') visitId: string,
+    @Body('categoryId') categoryId: string,
+    @Body('questionId') questionId: string,
+    @Body('answer') answer: any,
+  ): Promise<ResponseDto> {
+    return this.doctorsService.storeAnswer(
+      visitId,
+      categoryId,
+      questionId,
+      answer,
+    );
+  }
+
+  @Get(':visitId/profile')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Generate AI-generated patient profile based on answers',
+  })
+  @ApiParam({
+    name: 'visitId',
+    required: true,
+    description: 'ID of the visit to retrieve answers for and generate profile',
+    example: '613b1d6f5fc13a001e0b4c8d',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns an AI-generated patient profile',
+    type: ResponseDto,
+  })
+  async generateProfile(
+    @Param('visitId') visitId: string,
+  ): Promise<ResponseDto> {
+    return await this.doctorsService.generatePatientProfile(visitId);
   }
 }
