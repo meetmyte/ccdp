@@ -187,6 +187,94 @@ export class PatientsService {
     return ResponseDto.success(null, 'Patient deleted successfully');
   }
 
+  async getAllVisitsWithPagination(
+    paginationFilterDto: PaginationFilterDto,
+  ): Promise<ResponseDto> {
+    try {
+      const {
+        filters,
+        page = 1,
+        limit = 10,
+        sortBy = 'createdAt',
+        sortOrder = 'asc',
+      } = paginationFilterDto;
+
+      // Fetch paginated visits with total count
+      const { visits, totalCount } =
+        await this.visitRepository.getAllVisitsWithPagination(
+          paginationFilterDto,
+        );
+
+      if (!visits || visits.length === 0) {
+        return ResponseDto.success(
+          { visits: [], pageInfo: { page, limit, totalCount } },
+          'No visits found',
+        );
+      }
+
+      // Enhance visits with scores and signals
+      const enhancedVisits = await Promise.all(
+        visits.map(async (visit: any) => {
+          const answers = await this.answerRepository.getAnswersByVisitId(
+            visit._id,
+          );
+
+          // Calculate scores and signals
+          const { g8Score, sarcFScore, distressSignal } =
+            this.calculateScoresAndSignals(answers);
+
+          // Prepare visit data with scores and signals
+          const visitData: any = {
+            _id: visit._id,
+            patientId: visit.patientId,
+            visitId: visit.visitId,
+            date: visit.date,
+            createdAt: visit.createdAt,
+            updatedAt: visit.updatedAt,
+            summary: visit.summary,
+            scores: {
+              g8Score,
+              sarcFScore,
+            },
+          };
+
+          const signals = {
+            g8Signal: g8Score < g8ScoreMapping.thresold,
+            sarcFSignal: sarcFScore >= sarcFScoreMapping.thresold,
+            distressSignal,
+          };
+
+          // Only include signals if any of them is true
+          if (Object.values(signals).some((signal) => signal)) {
+            visitData.signals = signals;
+          }
+
+          return visitData;
+        }),
+      );
+
+      // Filter out visits with no valid signals
+      const filteredVisits = enhancedVisits.filter((visit) => visit.signals);
+
+      // Create pageInfo object
+      const pageInfo = {
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+      };
+
+      // Return success response
+      return ResponseDto.success(
+        { visits: filteredVisits, pageInfo },
+        'Visits fetched successfully',
+      );
+    } catch (error) {
+      console.error('Error fetching visits:', error);
+      return ResponseDto.error(error.message || 'Failed to fetch visits', 500);
+    }
+  }
+
   // Helper method to parse filters
   private parseFilters(filters: string): any {
     try {
@@ -247,5 +335,225 @@ export class PatientsService {
     });
 
     return { g8Score, sarcFScore, distressSignal };
+  }
+
+  // async getSignalDataForYear(year: number): Promise<ResponseDto> {
+  //   try {
+  //     // Start and end dates for the given year
+  //     const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+  //     const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+  //     // Aggregate signals month-wise
+  //     const monthlyData = await (
+  //       await this.visitRepository.getTable()
+  //     )
+  //       .aggregate([
+  //         {
+  //           $match: {
+  //             createdAt: { $gte: startDate, $lte: endDate },
+  //           },
+  //         },
+  //         {
+  //           $lookup: {
+  //             from: 'answers',
+  //             localField: '_id',
+  //             foreignField: 'visitId',
+  //             as: 'answers',
+  //           },
+  //         },
+  //         {
+  //           $addFields: {
+  //             g8Score: {
+  //               $reduce: {
+  //                 input: {
+  //                   $map: {
+  //                     input: '$answers',
+  //                     as: 'answer',
+  //                     in: {
+  //                       $cond: [
+  //                         {
+  //                           $in: ['$$answer.text', Object.keys(g8ScoreMapping)],
+  //                         },
+  //                         {
+  //                           $arrayElemAt: [g8ScoreMapping['$$answer.text'], 0],
+  //                         },
+  //                         0,
+  //                       ],
+  //                     },
+  //                   },
+  //                 },
+  //                 initialValue: 0,
+  //                 in: { $add: ['$$value', '$$this'] },
+  //               },
+  //             },
+  //             sarcFScore: {
+  //               $reduce: {
+  //                 input: {
+  //                   $map: {
+  //                     input: '$answers',
+  //                     as: 'answer',
+  //                     in: {
+  //                       $cond: [
+  //                         {
+  //                           $in: [
+  //                             '$$answer.text',
+  //                             Object.keys(sarcFScoreMapping),
+  //                           ],
+  //                         },
+  //                         {
+  //                           $arrayElemAt: [
+  //                             sarcFScoreMapping['$$answer.text'],
+  //                             0,
+  //                           ],
+  //                         },
+  //                         0,
+  //                       ],
+  //                     },
+  //                   },
+  //                 },
+  //                 initialValue: 0,
+  //                 in: { $add: ['$$value', '$$this'] },
+  //               },
+  //             },
+  //             distressSignal: {
+  //               $anyElementTrue: {
+  //                 $map: {
+  //                   input: '$answers',
+  //                   as: 'answer',
+  //                   in: {
+  //                     $cond: [
+  //                       {
+  //                         $and: [
+  //                           { $eq: ['$$answer.type', 'scale'] },
+  //                           {
+  //                             $gt: [
+  //                               '$$answer.answer',
+  //                               distressMapping.thresold,
+  //                             ],
+  //                           },
+  //                           {
+  //                             $eq: [
+  //                               '$$answer.categoryId.name',
+  //                               'Distress Screening',
+  //                             ],
+  //                           },
+  //                         ],
+  //                       },
+  //                       true,
+  //                       false,
+  //                     ],
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //         {
+  //           $group: {
+  //             _id: { $month: '$createdAt' },
+  //             distressCount: { $sum: { $cond: ['$distressSignal', 1, 0] } },
+  //             sarcFCount: {
+  //               $sum: {
+  //                 $cond: [
+  //                   { $gte: ['$sarcFScore', sarcFScoreMapping.thresold] },
+  //                   1,
+  //                   0,
+  //                 ],
+  //               },
+  //             },
+  //             g8Count: {
+  //               $sum: {
+  //                 $cond: [{ $lt: ['$g8Score', g8ScoreMapping.thresold] }, 1, 0],
+  //               },
+  //             },
+  //           },
+  //         },
+  //         {
+  //           $sort: { _id: 1 }, // Sort by month
+  //         },
+  //         {
+  //           $project: {
+  //             month: '$_id',
+  //             distressCount: 1,
+  //             sarcFCount: 1,
+  //             g8Count: 1,
+  //             _id: 0,
+  //           },
+  //         },
+  //       ])
+  //       .exec();
+
+  //     // Map data to include months without data
+  //     const chartData = Array.from({ length: 12 }, (_, i) => ({
+  //       month: i + 1,
+  //       distressCount: 0,
+  //       sarcFCount: 0,
+  //       g8Count: 0,
+  //     }));
+
+  //     monthlyData.forEach((data) => {
+  //       const index = data.month - 1;
+  //       chartData[index] = { ...chartData[index], ...data };
+  //     });
+
+  //     return ResponseDto.success(
+  //       chartData,
+  //       'Signal data retrieved successfully',
+  //     );
+  //   } catch (error) {
+  //     console.error('Error fetching signal data:', error);
+  //     return ResponseDto.error(
+  //       error.message || 'Failed to retrieve signal data',
+  //       500,
+  //     );
+  //   }
+  // }
+
+  async getSignalDataForYear(year: number): Promise<ResponseDto> {
+    try {
+      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+      // Fetch all visits within the year
+      const visits: any = await this.visitRepository.getVisitsByMonth(
+        startDate,
+        endDate,
+      );
+
+      // Initialize monthly signal counts
+      const monthlySignals = Array.from({ length: 12 }, (_, i) => ({
+        month: i + 1,
+        distressCount: 0,
+        sarcFCount: 0,
+        g8Count: 0,
+      }));
+
+      // Calculate scores and signals for each visit
+      visits.forEach((visit) => {
+        const { g8Score, sarcFScore, distressSignal } =
+          this.calculateScoresAndSignals(visit.answers || []);
+
+        const month = new Date(visit.createdAt).getMonth(); // Get month (0-11)
+
+        // Update monthly signal counts
+        if (distressSignal) monthlySignals[month].distressCount += 1;
+        if (g8Score < g8ScoreMapping.thresold)
+          monthlySignals[month].g8Count += 1;
+        if (sarcFScore >= sarcFScoreMapping.thresold)
+          monthlySignals[month].sarcFCount += 1;
+      });
+
+      // Return success response
+      return ResponseDto.success(
+        monthlySignals,
+        'Signal data retrieved successfully',
+      );
+    } catch (error) {
+      console.error('Error fetching signal data:', error);
+      return ResponseDto.error(
+        error.message || 'Failed to retrieve signal data',
+        500,
+      );
+    }
   }
 }

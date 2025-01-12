@@ -1,8 +1,8 @@
-import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, BadRequestException, Get, Param } from '@nestjs/common';
 import { AdminAuthService } from './auth.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { ValidationPipe } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiProperty, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LoginAdminDto } from './dto/login-admin.dto';
 import { ResponseDto } from 'src/helpers/dto/response.dto';
 
@@ -44,5 +44,17 @@ export class AdminAuthController {
   async login(@Body() loginAdminDto: LoginAdminDto) {
     const { email, password } = loginAdminDto;
     return await this.authService.loginAdmin(email, password);
+  }
+
+  //give me the code for getting the user role based on the email
+  @Get('role/:email')
+  @ApiOperation({ summary: 'Get user role' }) // Description of the endpoint
+  @ApiParam({
+    name: 'email',
+    description: 'Email of the user',
+    type: String,
+  })
+  async getUserRole(@Param('email') email: string) {
+    return await this.authService.getUserRole(email);
   }
 }

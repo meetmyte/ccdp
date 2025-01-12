@@ -72,4 +72,16 @@ export class AdminAuthService {
       throw new BadRequestException(ResponseDto.error(error?.message, 500));
     }
   }
+
+  async getUserRole(email: string): Promise<ResponseDto> {
+    try {
+      const user = await this.userRepository.findByEmail(email);
+      if (user) {
+        return ResponseDto.success({ role: user.role }, 'User role found');
+      }
+      return ResponseDto.badRequest(null, 'User not found');
+    } catch (error) {
+      throw new BadRequestException(ResponseDto.error(error?.message, 500));
+    }
+  }
 }

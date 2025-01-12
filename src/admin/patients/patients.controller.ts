@@ -117,4 +117,70 @@ export class PatientsController {
   async getAnswers(@Param('visitId') visitId: string): Promise<ResponseDto> {
     return this.patientsService.getAnswersByVisitId(visitId);
   }
+
+  @Get('all-visits')
+  @ApiOperation({
+    summary: 'Get all visits with filters, pagination, and signals',
+  })
+  @ApiQuery({
+    name: 'filters',
+    required: false,
+    description: 'Search filters as a JSON string (e.g., {"patientId":"123"})',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    description: 'Sort by field (e.g., createdAt)',
+    example: 'createdAt',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    description: 'Sort order (asc/desc)',
+    example: 'asc',
+  })
+  async getAllVisitsWithPagination(
+    @Query() paginationFilterDto: PaginationFilterDto,
+  ): Promise<ResponseDto> {
+    return this.patientsService.getAllVisitsWithPagination(paginationFilterDto);
+  }
+
+  @Get('signals/chart')
+  @ApiOperation({
+    summary: 'Retrieve monthly signal data for the chart',
+    description:
+      'Fetches signal counts (Distress, Sarc-F, G8) for each month of the given year.',
+  })
+  @ApiQuery({
+    name: 'year',
+    description: 'Year for which the signal data is requested',
+    example: 2023,
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Signal data retrieved successfully',
+    type: ResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid year provided' })
+  async getSignalDataForChart(
+    @Query('year') year: number,
+  ): Promise<ResponseDto> {
+    if (!year || isNaN(year)) {
+      return ResponseDto.badRequest(null, 'Invalid year provided');
+    }
+    return this.patientsService.getSignalDataForYear(year);
+  }
 }
