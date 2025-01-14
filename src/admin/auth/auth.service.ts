@@ -47,9 +47,9 @@ export class AdminAuthService {
   }
 
   async loginAdmin(email, password): Promise<ResponseDto> {
+    console.log('test')
     try {
       const admin = await this.userRepository.findByEmail(email);
-
       // Ensure the user is an admin and the password is valid
       if (
         admin &&

@@ -5,9 +5,11 @@ import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { USER_TYPE } from 'src/helpers/enums';
 import { User } from 'src/shared/schemas/user.schema';
 import { PaginationFilterDto } from 'src/helpers/dto/paginationFilter.dto';
+import { doctorAddTemplate } from 'src/helpers/emails/doctor-add-template';
+import { EmailService } from 'src/helpers/services/email.service';
 @Injectable()
 export class DoctorService {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private userRepository: UserRepository,private emailService: EmailService) {}
 
   async addDoctor(payload: CreateDoctorDto): Promise<ResponseDto> {
     try {
@@ -37,7 +39,18 @@ export class DoctorService {
       doctor.is_active = true;
       doctor.role = USER_TYPE.DOCTOR;
       const saveDoctor = await this.userRepository.create(doctor);
+          // Send email to patient
+          const emailHtml = doctorAddTemplate(
+            doctor.first_name,
+            doctor.last_name
+          );
 
+          await this.emailService.sendMail(
+            doctor.email,
+            "Welcome to The Jewish General Hospitals' Health-Connect Platform",
+            emailHtml,
+          );
+      
       return ResponseDto.success(
         saveDoctor,
         'Doctor created successfully',

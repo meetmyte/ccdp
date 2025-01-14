@@ -67,6 +67,7 @@ export class PatientsService {
     // Send email to patient
     const emailHtml = medicareCodeTemplate(
       newPatient.first_name,
+      newPatient.last_name,
       hospital_code,
     );
     await this.emailService.sendMail(

@@ -1,17 +1,17 @@
-// export const otpLoginTemplate = (name: string, otp: number): string => `
+// export const doctorAddTemplate = (
+//   firstName: string,
+//   lastName: string
+// ): string => `
 //   <div style="font-family: Arial, sans-serif; font-size: 16px; color: #333;">
-//     <h2>Hi ${name},</h2>
-//     <p>Welcome back! To complete your login, please enter the OTP code below:</p>
-//     <p><strong>OTP Code: ${otp}</strong></p>
-//     <p>This code is valid for a short time, so please use it promptly to log in.</p>
-//     <p>If you did not request this login, please ignore this message or contact our support team immediately.</p>
-//     <p>Thank you for choosing us!</p>
+//     <h2>Welcome to Our Platform, ${firstName} ${lastName}!</h2>
+//     <p>We are excited to have you onboard as a doctor:</p>
+//     <p>Thank you for joining us!</p>
 //     <p>Best regards,<br/>CCDP Team</p>
 //   </div>
 // `;
 
 
-export const otpLoginTemplate = (name: string, otp: number): string => `
+export const doctorAddTemplate = (firstName: string, lastName: string): string => `
   <html>
   <head>
     <style>
@@ -50,17 +50,24 @@ export const otpLoginTemplate = (name: string, otp: number): string => `
         color: #192655;
         margin: 20px 0;
       }
-      .otp-message {
+      .welcome-message {
         font-size: 16px;
         line-height: 1.6;
         color: #555555;
         margin-bottom: 20px;
       }
-      .otp-code {
-        font-size: 24px;
+      .cta {
+        margin-top: 20px;
+      }
+      .cta a {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 16px;
+        color: white;
+        background-color: #192655;
+        text-decoration: none;
+        border-radius: 5px;
         font-weight: bold;
-        color: #192655;
-        margin: 10px 0;
       }
       .footer {
         margin-top: 40px;
@@ -69,7 +76,8 @@ export const otpLoginTemplate = (name: string, otp: number): string => `
         background-color: #192655;
         padding: 20px;
         border-radius: 10px;
-        text-align: center;
+                text-align: center; /* Center-align the content */
+
       }
       .footer p {
         margin: 5px 0;
@@ -92,28 +100,31 @@ export const otpLoginTemplate = (name: string, otp: number): string => `
                                 <img src="https://myte-social-subscription.s3.ca-central-1.amazonaws.com/asset/myte-logo.png" alt="Myte Cody Logo">
       </div>
       <div class="header">
-        Login Verification Code
+        Welcome to Our Platform, Dr. ${firstName} ${lastName}!
       </div>
-      <div class="otp-message">
-        <p>Hi ${name},</p>
+      <div class="welcome-message">
+        <p>Dear Dr. ${firstName},</p>
         <p>
-          Welcome back! To complete your login, please enter the OTP code below:
-        </p>
-        <p class="otp-code">${otp}</p>
-        <p>
-          This code is valid for a short time, so please use it promptly to log in.
+          We are thrilled to welcome you as part of our esteemed network of healthcare professionals. 
+          Your expertise and dedication are what make our platform thrive.
         </p>
         <p>
-          If you did not request this login, please ignore this message or contact our support team immediately.
+          As a valued member, you can access all our resources, tools, and support to enhance your practice and 
+          connect with a broader patient base.
         </p>
+        <p>
+          If you have any questions or need assistance, feel free to reach out to us. We’re here to help.
+        </p>
+      </div>
+      <div class="cta">
+        <a href="http://ccdp-admin-dev.s3-website.ca-central-1.amazonaws.com/" target="_blank">Access Your Account</a>
       </div>
       <div class="footer">
-        <p>🙏 Thank you for choosing us!</p>
+        <p>🙏 Thank you for joining us!</p>
         <p><strong>Jewish General Hospital</strong></p>
         <p>3755 Chem. de la Côte-Sainte-Catherine, Montréal, QC H3T 1E2, Canada</p>
         <p>
           <a href="https://www.jgh.ca/">jgh.ca</a> | 
-          <a href="mailto:ahmed.mekallach@mytegroup.com">ahmed.mekallach@mytegroup.com</a>
         </p>
       </div>
       <div class="disclaimer">
