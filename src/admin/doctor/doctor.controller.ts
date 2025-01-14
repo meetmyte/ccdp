@@ -84,4 +84,24 @@ export class DoctorController {
   ): Promise<ResponseDto> {
     return this.doctorService.list(paginationFilterDto);
   }
+
+  @Get('verify')
+  @ApiOperation({ summary: 'Verify doctor via verification link' })
+  @ApiQuery({
+    name: 'token',
+    required: true,
+    description: 'Verification token sent via email',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Doctor verified successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired verification link',
+  })
+  @ApiResponse({ status: 404, description: 'Doctor not found' })
+  async verifyDoctor(@Query('token') token: string): Promise<ResponseDto> {
+    return this.doctorService.verifyDoctor(token);
+  }
 }

@@ -227,7 +227,7 @@ export class PatientsService {
           // Prepare visit data with scores and signals
           const visitData: any = {
             _id: visit._id,
-            patientId: visit.patientId,
+            patientInfo: visit.patientId,
             visitId: visit.visitId,
             date: visit.date,
             createdAt: visit.createdAt,

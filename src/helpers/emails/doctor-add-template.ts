@@ -10,8 +10,11 @@
 //   </div>
 // `;
 
-
-export const doctorAddTemplate = (firstName: string, lastName: string): string => `
+export const doctorAddTemplate = (
+  firstName: string,
+  lastName: string,
+  verificationLink: string,
+): string => `
   <html>
   <head>
     <style>
@@ -117,7 +120,7 @@ export const doctorAddTemplate = (firstName: string, lastName: string): string =
         </p>
       </div>
       <div class="cta">
-        <a href="http://ccdp-admin-dev.s3-website.ca-central-1.amazonaws.com/" target="_blank">Access Your Account</a>
+        <a href='${verificationLink}' target="_blank">Verify Your Account</a>
       </div>
       <div class="footer">
         <p>🙏 Thank you for joining us!</p>

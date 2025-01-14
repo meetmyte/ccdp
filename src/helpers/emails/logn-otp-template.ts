@@ -10,7 +10,6 @@
 //   </div>
 // `;
 
-
 export const otpLoginTemplate = (name: string, otp: number): string => `
   <html>
   <head>

@@ -5,7 +5,7 @@ export type VisitDocument = Visit & Document;
 
 @Schema({ timestamps: true })
 export class Visit {
-  @Prop({ required: true })
+  @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
   patientId: Types.ObjectId;
 
   @Prop({ required: true, unique: true })

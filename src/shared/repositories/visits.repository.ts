@@ -65,6 +65,11 @@ export class VisitsRepository {
     // Fetch paginated visits
     const visits = await this.visitModel
       .find(queryFilters)
+      .populate({
+        path: 'patientId',
+        model: 'User',
+        select: 'first_name last_name email', // Select only necessary fields for `categoryId`
+      })
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)

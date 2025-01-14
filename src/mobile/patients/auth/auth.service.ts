@@ -9,6 +9,7 @@ import { EmailService } from 'src/helpers/services/email.service';
 import { otpLoginTemplate } from 'src/helpers/emails/logn-otp-template';
 import { JwtService } from '@nestjs/jwt';
 import { TwilioService } from 'src/helpers/services/twillio.service';
+import { USER_TYPE } from 'src/helpers/enums';
 
 @Injectable()
 export class AuthService {
@@ -134,8 +135,16 @@ export class AuthService {
       }
     }
 
-    if (!user?.is_mobile_verified) {
-      return ResponseDto.success(null, 'mobile is not verified', 301);
+    // if (!user?.is_mobile_verified) {
+    //   return ResponseDto.success(null, 'mobile is not verified', 301);
+    // }
+
+    if (user.role == USER_TYPE.DOCTOR && !user.is_active) {
+      return ResponseDto.success(
+        null,
+        'You are not verified. Please contact admin for more details',
+        401,
+      );
     }
 
     const otp = this.generateOtp();

@@ -3,24 +3,31 @@ import { UserRepository } from 'src/shared/repositories/user.repository';
 import { CreateDoctorDto } from './dto/create-doctor.dto';
 import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { USER_TYPE } from 'src/helpers/enums';
-import { User } from 'src/shared/schemas/user.schema';
+import { ConfigService } from '@nestjs/config';
 import { PaginationFilterDto } from 'src/helpers/dto/paginationFilter.dto';
 import { doctorAddTemplate } from 'src/helpers/emails/doctor-add-template';
 import { EmailService } from 'src/helpers/services/email.service';
+import { JwtService } from '@nestjs/jwt';
+
 @Injectable()
 export class DoctorService {
-  constructor(private userRepository: UserRepository,private emailService: EmailService) {}
+  constructor(
+    private userRepository: UserRepository,
+    private emailService: EmailService,
+    private jwtService: JwtService,
+    private configService: ConfigService,
+  ) {}
 
   async addDoctor(payload: CreateDoctorDto): Promise<ResponseDto> {
     try {
-      const checkExistingDr = await (
+      const existingDoctor = await (
         await this.userRepository.getTable()
       ).findOne({
         $or: [{ email: payload.email }, { mobile_no: payload.mobile }],
         role: USER_TYPE.DOCTOR,
       });
 
-      if (checkExistingDr) {
+      if (existingDoctor) {
         return ResponseDto.success(
           null,
           'Doctor already exists with this email or mobile.',
@@ -28,36 +35,75 @@ export class DoctorService {
         );
       }
 
-      const doctor = new User();
-      doctor.email = payload.email;
-      doctor.mobile_no = payload.mobile;
-      doctor.date_of_birth = payload.date_of_birth;
-      doctor.first_name = payload.first_name;
-      doctor.last_name = payload.last_name;
-      doctor.gender = payload.gender;
-      doctor.is_mobile_verified = true;
-      doctor.is_active = true;
-      doctor.role = USER_TYPE.DOCTOR;
-      const saveDoctor = await this.userRepository.create(doctor);
-          // Send email to patient
-          const emailHtml = doctorAddTemplate(
-            doctor.first_name,
-            doctor.last_name
-          );
+      const doctor = {
+        email: payload.email,
+        mobile_no: payload.mobile,
+        date_of_birth: payload.date_of_birth,
+        first_name: payload.first_name,
+        last_name: payload.last_name,
+        gender: payload.gender,
+        is_mobile_verified: false,
+        is_active: false,
+        role: USER_TYPE.DOCTOR,
+      };
 
-          await this.emailService.sendMail(
-            doctor.email,
-            "Welcome to The Jewish General Hospitals' Health-Connect Platform",
-            emailHtml,
-          );
-      
+      const savedDoctor: any = await this.userRepository.create(doctor);
+
+      // Generate verification token
+      const verificationToken = this.jwtService.sign(
+        { email: savedDoctor.email, id: savedDoctor._id },
+        { expiresIn: '4d' },
+      );
+
+      const verificationUrl = `${this.configService.get<string>(
+        'FRONTEND_URL',
+      )}/doctor/verify?token=${verificationToken}`;
+
+      // Send verification email
+      const emailHtml = doctorAddTemplate(
+        doctor.first_name,
+        doctor.last_name,
+        verificationUrl,
+      );
+
+      await this.emailService.sendMail(
+        savedDoctor.email,
+        'Welcome to the Health-Connect Platform',
+        emailHtml,
+      );
+
       return ResponseDto.success(
-        saveDoctor,
-        'Doctor created successfully',
+        savedDoctor,
+        'Doctor created successfully. Verification email sent.',
         201,
       );
     } catch (error) {
       return ResponseDto.error(error.message, 500);
+    }
+  }
+
+  async verifyDoctor(token: string): Promise<ResponseDto> {
+    try {
+      // Decode and verify the token
+      const decoded = this.jwtService.verify(token);
+
+      const doctor: any = await this.userRepository.findById(decoded.id);
+      if (!doctor) {
+        return ResponseDto.error('Doctor not found', 404);
+      }
+
+      if (doctor.is_active) {
+        return ResponseDto.success(null, 'Doctor is already verified.', 200);
+      }
+
+      // Update the doctor status
+      doctor.is_active = true;
+      doctor.is_mobile_verified = true;
+      await this.userRepository.updateById(doctor._id, doctor);
+
+      return ResponseDto.success(null, 'Doctor verified successfully', 200);
+    } catch (error) {
+      return ResponseDto.error('Invalid or expired verification link.', 400);
     }
   }
 
