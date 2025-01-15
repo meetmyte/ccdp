@@ -521,12 +521,24 @@ export class PatientsService {
         endDate,
       );
 
+      // Fetch all patients created within the year
+      const patients: any = await this.userRepository.getPatientsByMonth(
+        startDate,
+        endDate,
+      );
+
       // Initialize monthly signal counts
       const monthlySignals = Array.from({ length: 12 }, (_, i) => ({
         month: i + 1,
         distressCount: 0,
         sarcFCount: 0,
         g8Count: 0,
+      }));
+
+      // Initialize monthly patient counts
+      const monthlyPatients = Array.from({ length: 12 }, (_, i) => ({
+        month: i + 1,
+        patientCount: 0,
       }));
 
       // Calculate scores and signals for each visit
@@ -544,17 +556,23 @@ export class PatientsService {
           monthlySignals[month].sarcFCount += 1;
       });
 
+      // Count patients created by month
+      patients.forEach((patient) => {
+        const month = new Date(patient.createdAt).getMonth(); // Get month (0-11)
+        monthlyPatients[month].patientCount += 1;
+      });
+
       // Return success response
       return ResponseDto.success(
-        monthlySignals,
-        'Signal data retrieved successfully',
+        {
+          signals: monthlySignals,
+          patients: monthlyPatients,
+        },
+        'Signal and patient data retrieved successfully',
       );
     } catch (error) {
-      console.error('Error fetching signal data:', error);
-      return ResponseDto.error(
-        error.message || 'Failed to retrieve signal data',
-        500,
-      );
+      console.error('Error fetching data:', error);
+      return ResponseDto.error(error.message || 'Failed to retrieve data', 500);
     }
   }
 }

@@ -6,6 +6,7 @@ import {
   Body,
   BadRequestException,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -35,14 +36,18 @@ export class ChatbotController {
     type: ResponseDto,
   })
   async askQuestion(
+    @Request() req, //
     @Body() chatRequestDto: ChatRequestDto,
   ): Promise<ResponseDto> {
     if (!chatRequestDto.question) {
       throw new BadRequestException('Question is required');
     }
 
+    const patientId = req.user.userId;
+
     const answer = await this.chatbotService.generateResponse(
       chatRequestDto.question,
+      patientId,
     );
     return ResponseDto.success({ answer }, 'Response generated successfully');
   }

@@ -61,6 +61,13 @@ export class AnswersRepository {
     console.log('Populated Answers:', answers);
     return answers;
   }
+
+  async findAnswersByVisitIds(visitIds: Types.ObjectId[]): Promise<any[]> {
+    return this.answerModel
+      .find({ visitId: { $in: visitIds } })
+      .populate('categoryId questionId') // Populate for detailed response
+      .lean();
+  }
 }
 
 // populate({ path: 'questions', model: Question.name });

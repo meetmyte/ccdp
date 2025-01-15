@@ -109,4 +109,12 @@ export class UserRepository {
       is_active: true,
     });
   }
+
+  async getPatientsByMonth(startDate, endDate, role = USER_TYPE.PATIENT) {
+    const visits = await this.userModel.find({
+      createdAt: { $gte: startDate, $lte: endDate },
+      role: role,
+    });
+    return visits;
+  }
 }

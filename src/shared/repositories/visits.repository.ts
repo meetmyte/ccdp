@@ -88,4 +88,8 @@ export class VisitsRepository {
     });
     return visits;
   }
+
+  async findVisitsByPatientId(patientId: string): Promise<any[]> {
+    return this.visitModel.find({ patientId }).lean();
+  }
 }
