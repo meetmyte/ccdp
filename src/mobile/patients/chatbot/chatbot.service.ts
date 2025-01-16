@@ -112,4 +112,72 @@ export class ChatbotService {
 
     return promptTemplate;
   }
+
+  private generateDoctorPrompt(question: string, patientData: string): string {
+    return `
+      You are an advanced medical assistant AI designed to assist doctors in understanding patient data and answering medical queries. 
+      Use the patient's medical history below to provide detailed and accurate insights in professional language. 
+  
+      Guidelines:
+      1. Structure your response with detailed observations and actionable insights.
+      2. Highlight any critical areas requiring attention based on the patient's history.
+      3. Provide recommendations for further investigation or treatment when relevant.
+      4. If a query cannot be answered with the given data, suggest steps to obtain the necessary information.
+  
+      Patient's Medical History:
+      ${patientData}
+  
+      Doctor's Question:
+      ${question}
+  
+      Example Response:
+      - Based on the patient's history of chemotherapy and reported dizziness, it is likely due to dehydration or fatigue. Suggest monitoring hydration levels and scheduling a follow-up consultation.
+      - If dizziness persists despite hydration, recommend further evaluation for underlying neurological conditions.
+  
+      Provide an accurate and concise response.
+    `;
+  }
+
+  async generateDoctorResponse(
+    question: string,
+    patientId: string,
+  ): Promise<string> {
+    const openai = this.openAiService.getClient();
+
+    // Fetch patient data
+    const visits = await this.visitsRepository.findVisitsByPatientId(patientId);
+    const visitIds = visits.map((visit) => visit._id);
+    const answers =
+      await this.answersRepository.findAnswersByVisitIds(visitIds);
+
+    // Generate a detailed patient summary
+    const patientSummary = this.generatePatientSummary(visits, answers);
+
+    // Prepare the chatbot prompt
+    const prompt = this.generateDoctorPrompt(question, patientSummary);
+
+    const assistantContext = `
+      You are an AI assistant designed for doctors, specializing in analyzing patient data and answering medically specific queries. 
+      Ensure responses are concise, professional, and directly relevant to the patient's health history.
+      If a question is unrelated to cancer or the health, respond with:
+      "Chatbot is trained to provide answers related to cancer only."
+      Keep the response concise and under 50 words.
+    `;
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o', // Use the appropriate model
+        messages: [
+          { role: 'system', content: assistantContext },
+          { role: 'user', content: prompt },
+        ],
+      });
+
+      const answer = response.choices[0].message.content;
+      return answer;
+    } catch (error) {
+      console.error('Error generating chatbot response for doctor:', error);
+      throw new BadRequestException('Failed to generate a response');
+    }
+  }
 }

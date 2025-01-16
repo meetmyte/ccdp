@@ -133,6 +133,14 @@ export class DoctorsService {
   ): Promise<ResponseDto> {
     const { patientId, doctorId, visitId, ...rest } = createConsultationDto;
 
+    const patientData = await (
+      await this.userRepository.getTable()
+    )
+      .findOne({
+        _id: new Types.ObjectId(patientId),
+      })
+      .lean();
+
     // Convert string IDs to ObjectId
     const consultationData = {
       ...rest,
@@ -144,10 +152,13 @@ export class DoctorsService {
     if (rest.conversation) {
       rest.consultationSummary = await this.generateDoctorSummaryUsingAi(
         rest.conversation,
+        patientData,
       );
     }
-    const consultation =
-      await this.consultationRepository.createConsultation(consultationData);
+    const consultation = await this.consultationRepository.createConsultation({
+      ...consultationData,
+      consultationSummary: rest.consultationSummary,
+    });
     return ResponseDto.success(consultation, 'Consultation added successfully');
   }
 
@@ -364,41 +375,96 @@ export class DoctorsService {
   //   }
   // }
 
+  // async generateDoctorSummaryUsingAi(
+  //   doctorConversation: string,
+  // ): Promise<string> {
+  //   try {
+  //     const openai = this.openAiService.getClient(); // Get the OpenAI client
+
+  //     const promptTemplate = `
+  //     You are an advanced medical assistant AI. Based on the following doctor's consultation conversation, generate a detailed and coherent summary suitable for both the patient and medical professionals. The summary should highlight the key points discussed during the consultation and provide actionable insights where applicable.
+
+  //     Ensure the summary includes the following:
+  //     1. A structured narrative that clearly outlines the doctor's observations, advice, and recommended actions in a professional and easy-to-understand language.
+  //     2. Key medical insights and observations drawn from the consultation.
+  //     3. A section for follow-up recommendations or additional diagnostics/tests, if mentioned in the conversation.
+
+  //     Provide the summary as a single paragraph suitable for inclusion in a medical record.
+
+  //     Doctor's Consultation:
+  //     ${doctorConversation}
+  //     `;
+
+  //     const assistantContext =
+  //       'Generate a structured and detailed summary of the doctor’s conversation as a single paragraph, highlighting observations, advice, and recommendations.';
+
+  //     const response = await openai.chat.completions.create({
+  //       model: 'gpt-4o',
+  //       messages: [
+  //         { role: 'system', content: assistantContext },
+  //         { role: 'user', content: promptTemplate },
+  //       ],
+  //     });
+
+  //     // Extract raw content from response
+  //     const summaryText = response.choices[0].message.content.trim();
+
+  //     console.log('Generated Summary:', summaryText);
+
+  //     return summaryText;
+  //   } catch (error) {
+  //     console.error('Error generating doctor summary:', error);
+  //     throw new InternalServerErrorException(
+  //       'Failed to generate doctor summary',
+  //     );
+  //   }
+  // }
+
   async generateDoctorSummaryUsingAi(
     doctorConversation: string,
+    patient: any, // Patient data including name, age, medical history, etc.
   ): Promise<string> {
     try {
       const openai = this.openAiService.getClient(); // Get the OpenAI client
 
       const promptTemplate = `
-      You are an advanced medical assistant AI. Based on the following doctor's consultation conversation, generate a detailed and coherent summary suitable for both the patient and medical professionals. The summary should highlight the key points discussed during the consultation and provide actionable insights where applicable.
-  
-      Ensure the summary includes the following:
-      1. A structured narrative that clearly outlines the doctor's observations, advice, and recommended actions in a professional and easy-to-understand language.
-      2. Key medical insights and observations drawn from the consultation.
-      3. A section for follow-up recommendations or additional diagnostics/tests, if mentioned in the conversation.
-  
-      Provide the summary as a single paragraph suitable for inclusion in a medical record.
-  
-      Doctor's Consultation:
-      ${doctorConversation}
+        You are an advanced medical assistant AI. Based on the following doctor's consultation conversation and patient information, generate a detailed and coherent medical report suitable for both patients and medical professionals.
+    
+        **Patient Information:**
+        Name: ${patient.first_name || 'N/A'} ${patient.last_name || ''}
+        Email: ${patient.email || 'N/A'}
+        Medical ID: ${patient.medicare_code || 'N/A'}
+        Date of Birth: ${patient.date_of_birth || 'N/A'}
+    
+        **Doctor's Consultation:**
+        ${doctorConversation}
+    
+        The report must include the following sections:
+        1. **Observations**: Key medical insights and observations drawn from the doctor's discussion and patient data.
+        2. **Advice/Recommendations**: Suggestions provided by the doctor to the patient, including actionable steps for treatment or lifestyle modifications.
+        3. **Prescriptions**: List any medications prescribed during the consultation, including dosages and instructions.
+        4. **Tests/Diagnostics**: Mention any tests or diagnostics recommended by the doctor during the consultation.
+        5. **Follow-up Instructions**: Include any follow-up actions, such as scheduling appointments or monitoring symptoms.
+    
+        Format the report in a structured format, and ensure the language is professional yet easy to understand for patients. Provide the summary as a clear, concise report.
       `;
 
-      const assistantContext =
-        'Generate a structured and detailed summary of the doctor’s conversation as a single paragraph, highlighting observations, advice, and recommendations.';
+      const assistantContext = `
+        Generate a structured and detailed medical report based on the provided patient data and doctor's consultation. The report should include observations, recommendations, prescriptions, diagnostics, and follow-up instructions.
+      `;
 
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-4o', // Use 'gpt-4' or 'gpt-4-turbo' as needed
         messages: [
           { role: 'system', content: assistantContext },
           { role: 'user', content: promptTemplate },
         ],
       });
 
-      // Extract raw content from response
+      // Extract the raw content from the response
       const summaryText = response.choices[0].message.content.trim();
 
-      console.log('Generated Summary:', summaryText);
+      console.log('Generated Doctor Report:', summaryText);
 
       return summaryText;
     } catch (error) {
