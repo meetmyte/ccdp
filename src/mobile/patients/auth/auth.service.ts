@@ -80,7 +80,7 @@ export class AuthService {
     const otp = this.generateOtp();
     await this.updatePatientOtp(patient._id, otp);
 
-    await this.sendOtpBySms(patient.mobile_no, otp);
+    await this.sendOtpBySms(`+1${patient.mobile_no}`, otp);
 
     return ResponseDto.success(null, 'OTP sent to the mobile number');
   }
