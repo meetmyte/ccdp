@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class ResendOtpDto {
   @ApiProperty({
-    description: 'Mobile number of the patient',
-    example: '+15020039938',
+    description: 'Identifier',
+    example: 'email OR mobile',
   })
   @IsNotEmpty()
-  // @IsMobilePhone() // Validates the mobile number
-  mobile_no: number;
+  @IsString()
+  identifier: string;
 }

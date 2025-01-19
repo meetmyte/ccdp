@@ -6,7 +6,9 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
+  Query,
   Request,
   UploadedFiles,
   UseGuards,
@@ -21,18 +23,24 @@ import {
   ApiBody,
   ApiBearerAuth,
   ApiConsumes,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { PatientGuard } from 'src/shared/guards/patient.guard';
 import { JwtAuthGuard } from 'src/shared/guards/jwt.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { PaginationFilterDto } from 'src/helpers/dto/paginationFilter.dto';
+import { DoctorsService } from 'src/mobile/doctors/doctors.service';
 
 @ApiTags('Visits')
 @Controller('visits')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, PatientGuard)
 export class VisitsController {
-  constructor(private readonly visitsService: VisitsService) {}
+  constructor(
+    private readonly visitsService: VisitsService,
+    private readonly doctorsService: DoctorsService,
+  ) {}
 
   @Get('questions')
   @HttpCode(HttpStatus.OK)
@@ -279,5 +287,81 @@ export class VisitsController {
     @Param('visitId') visitId: string,
   ): Promise<ResponseDto> {
     return await this.visitsService.generatePatientProfile(visitId);
+  }
+
+  @Patch(':visitId/profile')
+  @ApiOperation({ summary: 'Update patient profile summary' })
+  @ApiParam({
+    name: 'visitId',
+    required: true,
+    description: 'ID of the visit to update profile for',
+    example: '613b1d6f5fc13a001e0b4c8d',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        summary: {
+          type: 'object',
+          description: 'Updated profile summary data',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Patient profile updated successfully',
+    type: ResponseDto,
+  })
+  async updatePatientProfile(
+    @Param('visitId') visitId: string,
+    @Body('summary') summary: any,
+  ): Promise<ResponseDto> {
+    return await this.visitsService.updatePatientProfile(visitId, summary);
+  }
+
+  @Get('patient/consultation/list')
+  @ApiOperation({
+    summary: 'List consultations for the logged-in doctor with filters',
+  })
+  @ApiQuery({
+    name: 'filters',
+    required: false,
+    description:
+      'Search filters as a JSON string (e.g., {"patientId":"123", "visitId":"456"})',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    example: 1,
+    description: 'Page number for pagination',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    example: 10,
+    description: 'Number of records per page',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    example: 'createdAt',
+    description: 'Field to sort the records',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    example: 'asc',
+    description: 'Sorting order - asc or desc',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Consultations list retrieved successfully',
+    type: ResponseDto,
+  })
+  async listConsultations(
+    @Query() paginationFilterDto: PaginationFilterDto,
+  ): Promise<ResponseDto> {
+    return this.doctorsService.listConsultationsByDoctorId(paginationFilterDto);
   }
 }

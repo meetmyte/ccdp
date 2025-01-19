@@ -390,6 +390,17 @@ export class VisitsService {
     }
   }
 
+  async updatePatientProfile(visitId: string, summary: any) {
+    try {
+      await this.visitRepository.updateVisit(visitId, { summary });
+      return ResponseDto.success(null, 'Profile updated successfully');
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to update patient profile',
+      );
+    }
+  }
+
   // async generatePatientProfileUsingAi(patientData) {
   //   try {
   //     const openai = this.openAiService.getClient(); // Get the OpenAI client
