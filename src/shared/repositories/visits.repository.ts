@@ -68,7 +68,7 @@ export class VisitsRepository {
       .populate({
         path: 'patientId',
         model: 'User',
-        select: 'first_name last_name email', // Select only necessary fields for `categoryId`
+        select: 'first_name last_name email mobile_no', // Select only necessary fields for `categoryId`
       })
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
@@ -91,5 +91,9 @@ export class VisitsRepository {
 
   async findVisitsByPatientId(patientId: string): Promise<any[]> {
     return this.visitModel.find({ patientId }).lean();
+  }
+
+  async getTotalVisits() {
+    return await this.visitModel.countDocuments();
   }
 }

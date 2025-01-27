@@ -117,4 +117,12 @@ export class UserRepository {
     });
     return visits;
   }
+
+  async getTotalPatients() {
+    return await this.userModel.countDocuments({ role: USER_TYPE.PATIENT });
+  }
+
+  async getTotalDoctors(){
+    return await this.userModel.countDocuments({ role: USER_TYPE.DOCTOR });
+  }
 }

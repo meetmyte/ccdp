@@ -146,6 +146,67 @@ export class VisitsService {
     return ResponseDto.success(null, 'Answer stored successfully');
   }
 
+  async storeMultipleAnswers(
+    visitId: string,
+    answers: Array<{ categoryId: string; questionId: string; answer: any }>,
+  ): Promise<ResponseDto> {
+    // Check if the visit exists
+    const visit: any = await this.visitRepository.findVisitById(visitId);
+    if (!visit) throw new NotFoundException('Visit not found');
+
+    // Process each answer
+    const answerPromises = answers.map(async (item) => {
+      const { categoryId, questionId, answer } = item;
+
+      // Validate category and question
+      const category =
+        await this.questionsCategoryRepository.findById(categoryId);
+      if (!category) throw new NotFoundException('Category not found');
+
+      const question = category.questions.find(
+        (q) => q._id.toString() === questionId,
+      );
+      if (!question)
+        throw new NotFoundException(
+          'Question not found in the specified category',
+        );
+
+      // Format the answer based on question type
+      let formattedAnswer;
+      switch (question.type) {
+        case 'text':
+        case 'scale':
+        case 'boolean':
+          formattedAnswer = [{ text: question.text, answer }];
+          break;
+        case 'multiple':
+          formattedAnswer = answer.map((ans) => ({
+            text: ans.text,
+            answer: ans.answer,
+          }));
+          break;
+        case 'interactive_image':
+          formattedAnswer = [{ text: question.text, answer }];
+          break;
+        default:
+          throw new BadRequestException('Invalid question type');
+      }
+
+      // Save or update the answer
+      await this.answerRepository.createOrUpdateAnswers(
+        visit._id,
+        categoryId,
+        questionId,
+        formattedAnswer,
+      );
+    });
+
+    // Wait for all promises to complete
+    await Promise.all(answerPromises);
+
+    return ResponseDto.success(null, 'Answers stored successfully');
+  }
+
   async storeInteractiveAnswer(
     visitId: string,
     categoryId: string,
@@ -254,6 +315,81 @@ export class VisitsService {
   //   }
   // }
 
+  // async getAnswersByVisitId(visitId: string): Promise<ResponseDto> {
+  //   try {
+  //     const questions =
+  //       await this.questionsCategoryRepository.findAllQuestions();
+  //     const answers = await this.answerRepository.getAnswersByVisitId(visitId);
+
+  //     // Create a map to store answers by questionId for easy access
+  //     const answerMap = new Map();
+  //     answers.forEach((answer) => {
+  //       answerMap.set(answer.questionId.id, answer.answer);
+  //     });
+
+  //     // Map each question to its answer if available
+  //     const groupedQuestions = questions.map((category) => ({
+  //       _id: category._id,
+  //       name: category.name,
+  //       createdAt: category.createdAt,
+  //       updatedAt: category.updatedAt,
+  //       questions: category.questions.map((question) => {
+  //         const answerData = answerMap.get(question._id.toString()) || [];
+
+  //         // Extract main question answer if it exists
+  //         let mainAnswer = null;
+  //         if (question.type === 'interactive_image') {
+  //           mainAnswer =
+  //             answerData.find((a) => a.text === question.text)?.answer || null;
+  //         } else {
+  //           mainAnswer =
+  //             answerData.find((a) => a.text === question.text)?.answer || null;
+  //         }
+
+  //         // Map sub-questions with their answers
+  //         const subQuestionsWithAnswers =
+  //           question.subQuestions?.map((subQ) => {
+  //             const subAnswer = answerData.find(
+  //               (a) => a.text === subQ.text,
+  //             )?.answer;
+
+  //             // Ensure `false` or empty string values are preserved correctly
+  //             return {
+  //               ...subQ,
+  //               answer: subAnswer !== undefined ? subAnswer : null,
+  //             };
+  //           }) || [];
+
+  //         // Prepare the question object
+  //         const questionObject = {
+  //           ...question.toJSON(),
+  //           subQuestions: subQuestionsWithAnswers,
+  //         };
+
+  //         // Remove the answer key if there are sub-questions
+  //         if (subQuestionsWithAnswers.length > 0) {
+  //           delete questionObject.answer;
+  //         } else {
+  //           questionObject.answer = mainAnswer;
+  //         }
+
+  //         return questionObject;
+  //       }),
+  //     }));
+
+  //     return ResponseDto.success(
+  //       groupedQuestions,
+  //       'Answers retrieved successfully',
+  //     );
+  //   } catch (error) {
+  //     this.logger.error(
+  //       `Failed to retrieve answers for visitId: ${visitId}`,
+  //       error.stack,
+  //     );
+  //     throw new InternalServerErrorException('Unable to retrieve answers');
+  //   }
+  // }
+
   async getAnswersByVisitId(visitId: string): Promise<ResponseDto> {
     try {
       const questions =
@@ -278,11 +414,13 @@ export class VisitsService {
           // Extract main question answer if it exists
           let mainAnswer = null;
           if (question.type === 'interactive_image') {
-            mainAnswer =
-              answerData.find((a) => a.text === question.text)?.answer || null;
+            mainAnswer = answerData.find(
+              (a) => a.text === question.text,
+            )?.answer;
           } else {
-            mainAnswer =
-              answerData.find((a) => a.text === question.text)?.answer || null;
+            mainAnswer = answerData.find(
+              (a) => a.text === question.text,
+            )?.answer;
           }
 
           // Map sub-questions with their answers
@@ -292,7 +430,7 @@ export class VisitsService {
                 (a) => a.text === subQ.text,
               )?.answer;
 
-              // Ensure `false` or empty string values are preserved correctly
+              // Ensure `false`, `0`, or empty string values are preserved correctly
               return {
                 ...subQ,
                 answer: subAnswer !== undefined ? subAnswer : null,
@@ -309,7 +447,8 @@ export class VisitsService {
           if (subQuestionsWithAnswers.length > 0) {
             delete questionObject.answer;
           } else {
-            questionObject.answer = mainAnswer;
+            questionObject.answer =
+              mainAnswer !== undefined ? mainAnswer : null;
           }
 
           return questionObject;
@@ -523,6 +662,22 @@ export class VisitsService {
       throw new InternalServerErrorException(
         'Failed to generate patient profile',
       );
+    }
+  }
+
+  async updateSignalStatus(
+    vistiId,
+    isSignalResolved,
+    signalComments,
+  ): Promise<ResponseDto> {
+    try {
+      await this.visitRepository.updateVisit(vistiId, {
+        isSignalResolved,
+        signalComments,
+      });
+      return ResponseDto.success(null, 'Signal status updated successfully');
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to update signal status');
     }
   }
 }

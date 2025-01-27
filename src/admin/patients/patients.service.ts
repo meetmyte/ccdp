@@ -575,4 +575,57 @@ export class PatientsService {
       return ResponseDto.error(error.message || 'Failed to retrieve data', 500);
     }
   }
+
+  async dashboard(): Promise<ResponseDto> {
+    try {
+      // Fetch total counts for patients, visits, and doctors in parallel
+      const [totalPatients, totalVisits, totalDoctors, visits] =
+        await Promise.all([
+          this.userRepository.getTotalPatients(),
+          this.visitRepository.getTotalVisits(),
+          this.userRepository.getTotalDoctors(),
+          this.visitRepository
+            .getTable()
+            .find({ isSignalResolved: false })
+            .lean(),
+        ]);
+
+      // Calculate unresolved signals based on visit answers
+      const totalSignals = (
+        await Promise.all(
+          visits.map(async (visit: any) => {
+            const answers = await this.answerRepository.getAnswersByVisitId(
+              visit._id,
+            );
+
+            const { g8Score, sarcFScore, distressSignal } =
+              this.calculateScoresAndSignals(answers);
+
+            // Check if the visit has any unresolved signals
+            return (
+              g8Score < g8ScoreMapping.thresold ||
+              sarcFScore >= sarcFScoreMapping.thresold ||
+              distressSignal
+            );
+          }),
+        )
+      ).filter(Boolean).length;
+
+      return ResponseDto.success(
+        {
+          totalPatients,
+          totalVisits,
+          totalDoctors,
+          totalSignals, // Dynamically calculated signal count
+        },
+        'Dashboard data retrieved successfully',
+      );
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      return ResponseDto.error(
+        error.message || 'Failed to retrieve dashboard data',
+        500,
+      );
+    }
+  }
 }

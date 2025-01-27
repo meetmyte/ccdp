@@ -213,6 +213,53 @@ export class VisitsController {
     );
   }
 
+  @Post(':visitId/answers/multiple')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Store or update multiple answers for questions' })
+  @ApiParam({
+    name: 'visitId',
+    required: true,
+    description: 'ID of the visit',
+    example: '672728ca0febfda4b1df5adf',
+  })
+  @ApiBody({
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          categoryId: {
+            type: 'string',
+            description: 'ID of the question category',
+            example: '672728ca0febfda4b1df5adf',
+          },
+          questionId: {
+            type: 'string',
+            description: 'ID of the question',
+            example: '613b1d6f5fc13a001e0b4c7d',
+          },
+          answer: {
+            type: 'string',
+            description: 'Answer to the question',
+            example: 'Not feeling well',
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Answers stored or updated successfully',
+    type: ResponseDto,
+  })
+  async storeMultipleAnswers(
+    @Param('visitId') visitId: string,
+    @Body()
+    answers: Array<{ categoryId: string; questionId: string; answer: any }>,
+  ): Promise<ResponseDto> {
+    return this.visitsService.storeMultipleAnswers(visitId, answers);
+  }
+
   @Get('list')
   @ApiOperation({
     summary: 'Get all visits of a patient',
@@ -363,5 +410,45 @@ export class VisitsController {
     @Query() paginationFilterDto: PaginationFilterDto,
   ): Promise<ResponseDto> {
     return this.doctorsService.listConsultationsByDoctorId(paginationFilterDto);
+  }
+
+  @Post('signal/status/:vistiId')
+  @ApiOperation({ summary: 'Update signal status for a visit' })
+  @ApiParam({
+    name: 'vistiId',
+    required: true,
+    description: 'ID of the visit to update signal status for',
+    example: '613b1d6f5fc13a001e0b4c8d',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        isSignalResolved: {
+          type: 'boolean',
+          description: 'Updated signal status',
+        },
+        signalComments: {
+          type: 'string',
+          description: 'It is resolved. patient is under control now.',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Signal status updated successfully',
+    type: ResponseDto,
+  })
+  async updateSignalStatus(
+    @Param('vistiId') vistiId: string,
+    @Body('isSignalResolved') isSignalResolved: boolean,
+    @Body('signalComments') signalComments: string,
+  ): Promise<ResponseDto> {
+    return this.visitsService.updateSignalStatus(
+      vistiId,
+      isSignalResolved,
+      signalComments,
+    );
   }
 }

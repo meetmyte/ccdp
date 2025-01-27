@@ -183,4 +183,54 @@ export class PatientsController {
     }
     return this.patientsService.getSignalDataForYear(year);
   }
+
+  @Get('dashboard')
+  @ApiOperation({
+    summary: 'Get dashboard data',
+    description:
+      'Fetches total counts of patients, visits, doctors, and unresolved signals for the dashboard.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Dashboard data retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 200 },
+        message: {
+          type: 'string',
+          example: 'Dashboard data retrieved successfully',
+        },
+        data: {
+          type: 'object',
+          properties: {
+            totalPatients: { type: 'number', example: 1849 },
+            totalVisits: { type: 'number', example: 3000 },
+            totalDoctors: { type: 'number', example: 24 },
+            totalSignals: { type: 'number', example: 740 },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Failed to retrieve dashboard data',
+    schema: {
+      type: 'object',
+      properties: {
+        statusCode: { type: 'number', example: 500 },
+        message: {
+          type: 'string',
+          example: 'Failed to retrieve dashboard data',
+        },
+        error: { type: 'string', example: 'Internal Server Error' },
+      },
+    },
+  })
+  async dashboard(): Promise<ResponseDto> {
+    return this.patientsService.dashboard();
+  }
+
+  //he
 }
