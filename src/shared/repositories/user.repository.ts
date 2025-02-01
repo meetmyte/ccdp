@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../schemas/user.schema';
 import { USER_TYPE } from 'src/helpers/enums';
+import { generateHash } from 'src/helpers/hash';
 
 @Injectable()
 export class UserRepository {
@@ -19,7 +20,7 @@ export class UserRepository {
 
   // Find a user by email
   async findByEmail(email: string): Promise<any> {
-    return this.userModel.findOne({ email }).exec();
+    return this.userModel.findOne({ emailHash: generateHash(email) }).exec();
   }
 
   // Generic method to fetch all users with pagination, filters, and sorting
@@ -90,22 +91,30 @@ export class UserRepository {
   }
 
   async findInactiveMobile(mobile_no, is_active = true) {
-    return await this.userModel.findOne({ mobile_no });
+    return await this.userModel.findOne({
+      mobileHash: generateHash(mobile_no),
+    });
   }
 
   async findByMobileOrEmail(
-    mobile_no: number,
+    mobile_no: string,
     email: string,
   ): Promise<User | null> {
     return this.userModel.findOne({
-      $or: [{ mobile_no }, { email }],
+      $or: [
+        { mobileHash: generateHash(mobile_no) },
+        { emailHash: generateHash(email) },
+      ],
       is_active: true,
     });
   }
 
   async findByIdentifier(identifier: string): Promise<User | null> {
     return this.userModel.findOne({
-      $or: [{ mobile_no: identifier }, { email: identifier }],
+      $or: [
+        { mobileHash: generateHash(identifier) },
+        { email: generateHash(identifier) },
+      ],
       is_active: true,
     });
   }

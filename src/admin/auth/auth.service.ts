@@ -37,6 +37,7 @@ export class AdminAuthService {
         password: hashedPassword, // Store hashed password
         role: USER_TYPE.ADMIN, // Set the role as 'admin'
         is_active: true, // By default, set admin as active
+        mobile_no: "1312312332"
       };
 
       await this.userRepository.create(newUser); // Use repository to create the user

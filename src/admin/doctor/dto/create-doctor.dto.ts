@@ -25,7 +25,7 @@ export class CreateDoctorDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  mobile: number;
+  mobile: string;
 
   @ApiProperty()
   @IsNotEmpty()

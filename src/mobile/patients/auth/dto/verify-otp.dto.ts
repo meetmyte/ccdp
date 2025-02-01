@@ -8,7 +8,7 @@ export class VerifyOtpDto {
   })
   @IsNotEmpty()
   // @IsMobilePhone() // Validates the mobile number
-  mobile_no: number;
+  mobile_no: string;
 
   @ApiProperty({
     description: 'OTP',

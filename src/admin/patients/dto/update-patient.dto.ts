@@ -18,7 +18,7 @@ export class UpdatePatientDto extends PartialType(CreatePatientDto) {
     description: 'Update patient mobile number',
     example: '1234567890',
   })
-  mobile?: number;
+  mobile?: string;
 
   @ApiProperty({
     description: 'Update patient gender',

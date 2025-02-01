@@ -8,5 +8,5 @@ export class ResendOtpDto {
   })
   @IsNotEmpty()
   // @IsMobilePhone() // Validates the mobile number
-  mobile_no: number;
+  mobile_no: string;
 }

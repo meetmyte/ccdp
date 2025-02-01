@@ -24,7 +24,7 @@ export class VerifyPatientDto {
   })
   @IsNotEmpty()
   // @IsMobilePhone() // Validate as a mobile phone number
-  mobile_no: number;
+  mobile_no: string;
 
   @ApiProperty({
     description: 'Medicare Number',

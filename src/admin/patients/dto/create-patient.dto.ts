@@ -25,7 +25,7 @@ export class CreatePatientDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  mobile: number;
+  mobile: string;
 
   @ApiProperty()
   @IsNotEmpty()

@@ -2,22 +2,29 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { USER_TYPE } from 'src/helpers/enums';
-import * as mongooseFieldEncryption from 'mongoose-field-encryption';
 import * as dotEnv from 'dotenv';
+import * as crypto from 'crypto';
+import { generateHash } from 'src/helpers/hash';
 dotEnv.config();
 
 export type UserDocument = User & Document;
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop({ required: true })
+  @Prop({ required: true, set: encryptField, get: decryptField })
   first_name: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, set: encryptField, get: decryptField })
   last_name: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, set: encryptField, get: decryptField })
   email: string;
+
+  @Prop({ required: false, unique: true, set: encryptField, get: decryptField })
+  mobile_no: string;
+
+  @Prop({ required: false })
+  date_of_birth: Date;
 
   @Prop({ required: false, default: null })
   password: string;
@@ -43,44 +50,64 @@ export class User {
   @Prop({ default: null, required: false })
   hospital_code: string;
 
-  @Prop({ default: null })
-  mobile_no: number;
-
-  @Prop({ required: false, default: null })
+  @Prop({
+    required: false,
+    default: null,
+    set: encryptField,
+    get: decryptField,
+  })
   gender: string;
-
-  @Prop({ required: false, default: null })
-  date_of_birth: Date;
 
   @Prop({ default: false })
   is_mobile_verified: boolean;
+
+  @Prop({ required: false, unique: true })
+  emailHash: string;
+
+  @Prop({ required: false, unique: true })
+  mobileHash: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-// 2) Use the plugin on the schema
-UserSchema.plugin(mongooseFieldEncryption.fieldEncryption, {
-  // List all the fields you want to encrypt:
-  fields: [
-    'first_name',
-    'last_name',
-    'password',
-    'medicare_code',
-    'mobile_no',
-    'date_of_birth',
-    'otp',
-    'login_otp',
-  ],
+// **Utility function for encryption**
+function encryptField(value: string): string {
+  if (!value) return value;
+  const encryptionKey = Buffer.from(process.env.FIELD_ENCRYPTION_KEY, 'base64');
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv('aes-256-cbc', encryptionKey, iv);
+  let encrypted = cipher.update(value.toString(), 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return `${iv.toString('hex')}:${encrypted}`;
+}
 
-  // Use a secret key from your .env (DON'T hardcode in real apps)
-  secret: process.env.ENCRYPTION_KEY || 'HCEnRyptionKey@123!@#&&^8',
+// **Utility function for decryption**
+function decryptField(value: string): string {
+  if (!value) return value;
+  const encryptionKey = Buffer.from(process.env.FIELD_ENCRYPTION_KEY, 'base64');
+  const [iv, encryptedText] = value.split(':');
+  const decipher = crypto.createDecipheriv(
+    'aes-256-cbc',
+    encryptionKey,
+    Buffer.from(iv, 'hex'),
+  );
+  let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+}
 
-  // Optionally, define a custom salt generator if needed.
-  // If you omit it, the plugin generates one automatically.
-  // saltGenerator: (secret) => {
-  //   // Must return a 16-byte buffer/string
-  //   return '1234567890123456';
-  // }
+// **Middleware to hash `emailHash` and `mobileHash` before saving**
+UserSchema.pre<UserDocument>('save', function (next) {
+  // Ensure `emailHash` and `mobileHash` are always set
+  if (!this.emailHash && this.email) {
+    this.emailHash = generateHash(this.email);
+  }
+  if (!this.mobileHash && this.mobile_no) {
+    this.mobileHash = generateHash(this.mobile_no);
+  }
+  next();
 });
+
+// Enable `getters` globally so that decryption happens automatically
 UserSchema.set('toJSON', { getters: true });
 UserSchema.set('toObject', { getters: true });
