@@ -56,8 +56,9 @@ export class DoctorService {
       );
 
       const verificationUrl = `${this.configService.get<string>(
-        'FRONTEND_URL',
+        'BACKEND_URL',
       )}/doctor/verify?token=${verificationToken}`;
+      console.log("🚀 ~ DoctorService ~ addDoctor ~ verificationUrl:", verificationUrl)
 
       // Send verification email
       const emailHtml = doctorAddTemplate(

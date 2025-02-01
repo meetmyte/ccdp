@@ -17,9 +17,14 @@ export class Visit {
   @Prop({ default: Date.now })
   date: Date;
 
-  // We want to encrypt this field
-  @Prop({ type: Object, required: false, default: null })
-  summary?: Record<string, any>;
+  @Prop({ type: Object, required: false, default: null }) // Add the summary field
+  summary?: Record<string, any>; // Use Record to allow storing JSON
+
+  @Prop({ type: Boolean, required: false, default: false })
+  isSignalResolved: boolean;
+
+  @Prop({ type: String, required: false, default: null })
+  signalComments: string;
 }
 
 export const VisitsSchema = SchemaFactory.createForClass(Visit);

@@ -163,12 +163,10 @@ export class DoctorsService {
   }
 
   async listConsultationsByDoctorId(
-    doctorId: string,
     paginationFilterDto: PaginationFilterDto,
   ): Promise<ResponseDto> {
     const { consultations, totalCount } =
       await this.consultationRepository.findConsultationsByDoctorId(
-        doctorId,
         paginationFilterDto,
       );
 

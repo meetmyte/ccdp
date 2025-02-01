@@ -105,7 +105,7 @@ export class DoctorsController {
     return this.doctorsService.addConsultation(createConsultationDto);
   }
 
-  @Get('consultation/list/:doctorId')
+  @Get('consultation/list')
   @ApiOperation({
     summary: 'List consultations for the logged-in doctor with filters',
   })
@@ -144,22 +144,18 @@ export class DoctorsController {
     description: 'Consultations list retrieved successfully',
     type: ResponseDto,
   })
-  @ApiParam({
-    name: 'doctorId',
-    type: 'string',
-    required: true,
-    description:
-      'The ID of the doctor whose assigned patients are being listed.',
-    example: '647f1d6eb9b123456789abcd',
-  })
+  // @ApiParam({
+  //   name: 'doctorId',
+  //   type: 'string',
+  //   required: true,
+  //   description:
+  //     'The ID of the doctor whose assigned patients are being listed.',
+  //   example: '647f1d6eb9b123456789abcd',
+  // })
   async listConsultations(
-    @Param('doctorId') doctorId: string,
     @Query() paginationFilterDto: PaginationFilterDto,
   ): Promise<ResponseDto> {
-    return this.doctorsService.listConsultationsByDoctorId(
-      doctorId,
-      paginationFilterDto,
-    );
+    return this.doctorsService.listConsultationsByDoctorId(paginationFilterDto);
   }
 
   @Patch(':consultationId')

@@ -67,7 +67,6 @@ export class ConsultationRepository {
   }
 
   async findConsultationsByDoctorId(
-    doctorId: string,
     paginationFilterDto: PaginationFilterDto,
   ): Promise<{ consultations: Consultation[]; totalCount: number }> {
     const {
@@ -85,8 +84,12 @@ export class ConsultationRepository {
       parsedFilters.patientId = new Types.ObjectId(parsedFilters.patientId);
     }
 
+    if (parsedFilters.doctorId) {
+      parsedFilters.doctorId = new Types.ObjectId(parsedFilters.doctorId);
+    }
+
     const query = {
-      doctorId: new Types.ObjectId(doctorId),
+      // doctorId: new Types.ObjectId(doctorId),
       ...parsedFilters,
     };
 

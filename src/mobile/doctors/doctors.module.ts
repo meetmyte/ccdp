@@ -8,5 +8,6 @@ import { VisitsModule } from '../patients/visits/visits.module';
   imports: [SharedModule, forwardRef(() => VisitsModule)],
   controllers: [DoctorsController],
   providers: [DoctorsService],
+  exports: [DoctorsService],
 })
 export class DoctorsModule {}

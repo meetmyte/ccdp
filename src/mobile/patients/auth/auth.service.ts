@@ -68,22 +68,57 @@ export class AuthService {
   }
 
   async resendOtp(resendOtpDto: ResendOtpDto): Promise<ResponseDto> {
-    const { mobile_no } = resendOtpDto;
-    const patient: any = await this.userRepository.findInactiveMobile(
-      mobile_no,
-      false,
-    );
-    if (!patient) {
-      return ResponseDto.badRequest(null, 'Mobile number not found');
+    const { identifier } = resendOtpDto;
+    const isMobile = /^\d{10}$/.test(identifier); // Assuming mobile number is 10 digits
+    let user: any;
+    if (isMobile) {
+      user = await this.userRepository.findInactiveMobile(identifier);
+      if (!user) {
+        return ResponseDto.badRequest(null, 'Mobile number not found');
+      }
+    } else {
+      user = await this.userRepository.findByEmail(identifier);
+      if (!user) {
+        return ResponseDto.badRequest(null, 'Email not found');
+      }
     }
 
     const otp = this.generateOtp();
-    await this.updatePatientOtp(patient._id, otp);
+    await this.userRepository.updateById(user._id, { login_otp: otp, otp });
 
-    await this.sendOtpBySms(patient.mobile_no, otp);
-
-    return ResponseDto.success(null, 'OTP sent to the mobile number');
+    if (isMobile) {
+      // TODO: uncomment after the testing is done.
+      try {
+        await this.sendOtpBySms(`+1${identifier}`, otp);
+      } catch (e) {
+        console.log('🚀 ~ AuthService ~ login ~ e:', e);
+        return ResponseDto.error(
+          'Invalid mobile number provided. Please ensure the number is in the correct format for the Canada region.',
+          500,
+        );
+      }
+    } else {
+      await this.sendOtpByEmail(otp, user);
+    }
+    return ResponseDto.success(null, 'OTP sent to successfully.');
   }
+  // async resendOtp(resendOtpDto: LoginDto): Promise<ResponseDto> {
+  //   const { mobile_no } = resendOtpDto;
+  //   const patient: any = await this.userRepository.findInactiveMobile(
+  //     mobile_no,
+  //     false,
+  //   );
+  //   if (!patient) {
+  //     return ResponseDto.badRequest(null, 'Mobile number not found');
+  //   }
+
+  //   const otp = this.generateOtp();
+  //   await this.updatePatientOtp(patient._id, otp);
+
+  //   await this.sendOtpBySms(patient.mobile_no, otp);
+
+  //   return ResponseDto.success(null, 'OTP sent to the mobile number');
+  // }
 
   async verifyOtp(verifyOtp: VerifyOtpDto): Promise<ResponseDto> {
     const { mobile_no, otp } = verifyOtp;

@@ -29,6 +29,19 @@ export class AnswersRepository {
       .exec();
   }
 
+  async createOrUpdateAnswers(
+    visitId: string,
+    categoryId: string,
+    questionId: string,
+    formattedAnswer: any,
+  ): Promise<void> {
+    await this.answerModel.updateOne(
+      { visitId, categoryId, questionId },
+      { $set: { answer: formattedAnswer, updatedAt: new Date() } },
+      { upsert: true },
+    );
+  }
+
   // async getAnswersByVisitId(visitId: string): Promise<any> {
   //   return this.answerModel
   //     .find({ visitId: new Types.ObjectId(visitId) }) // Convert to ObjectId
