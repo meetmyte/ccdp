@@ -170,9 +170,9 @@ export class AuthService {
       }
     }
 
-    // if (!user?.is_mobile_verified) {
-    //   return ResponseDto.success(null, 'mobile is not verified', 301);
-    // }
+    if (!user?.is_mobile_verified && user.role == USER_TYPE.PATIENT) {
+      return ResponseDto.success(null, 'mobile is not verified', 301);
+    }
 
     if (user.role == USER_TYPE.DOCTOR && !user.is_active) {
       return ResponseDto.success(

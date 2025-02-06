@@ -1,7 +1,6 @@
 // src/shared/schemas/answers.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import * as mongooseFieldEncryption from 'mongoose-field-encryption';
 
 export type AnswerDocument = Answer & Document;
 
@@ -31,11 +30,3 @@ export class Answer {
 }
 
 export const AnswerSchema = SchemaFactory.createForClass(Answer);
-
-AnswerSchema.plugin(mongooseFieldEncryption.fieldEncryption, {
-  fields: ['answer'], // Any fields you want to encrypt
-  secret: process.env.ENCRYPTION_KEY || 'YOUR_LONG_SECURE_KEY',
-  // Optional: specify a custom salt generator if you need
-  // deterministic encryption or have special requirements
-  // saltGenerator: (secret) => '1234567890123456',
-});

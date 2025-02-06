@@ -159,7 +159,7 @@ export class DoctorPatientAssignmentRepository {
         .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
         .skip(skip)
         .limit(limit)
-        .lean(); // Use lean() for performance optimization
+        .exec(); // Use lean() for performance optimization
 
       // Debugging log: Check retrieved records
       console.log('Fetched Patients:', patients);
