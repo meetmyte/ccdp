@@ -22,5 +22,6 @@ import { VisitsModule } from 'src/mobile/patients/visits/visits.module';
     JwtService,
     VisitsService,
   ],
+  exports: [PatientsService],
 })
 export class PatientsModule {}

@@ -7,6 +7,7 @@ import {
   Param,
   Get,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { DoctorService } from './doctor.service';
 import { CreateDoctorDto } from './dto/create-doctor.dto';
@@ -16,13 +17,17 @@ import {
   ApiResponse,
   ApiBody,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { UpdateDoctorDto } from './dto/update-doctor.dto';
 import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { PaginationFilterDto } from 'src/helpers/dto/paginationFilter.dto';
+import { AdminGuard } from 'src/shared/guards/admin.guard';
 
 @ApiTags('Doctors')
 @Controller('doctor')
+@UseGuards(AdminGuard)
+@ApiBearerAuth()
 export class DoctorController {
   constructor(private readonly doctorService: DoctorService) {}
 

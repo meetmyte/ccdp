@@ -291,7 +291,7 @@ export class PatientsService {
     }
   }
 
-  private calculateScoresAndSignals(answers: any[]): {
+  public calculateScoresAndSignals(answers: any[]): {
     g8Score: number;
     sarcFScore: number;
     distressSignal: boolean;
@@ -591,25 +591,30 @@ export class PatientsService {
         ]);
 
       // Calculate unresolved signals based on visit answers
-      const totalSignals = (
-        await Promise.all(
-          visits.map(async (visit: any) => {
-            const answers = await this.answerRepository.getAnswersByVisitId(
-              visit._id,
-            );
+      // const totalSignals = (
+      //   await Promise.all(
+      //     visits.map(async (visit: any) => {
+      //       const answers = await this.answerRepository.getAnswersByVisitId(
+      //         visit._id,
+      //       );
 
-            const { g8Score, sarcFScore, distressSignal } =
-              this.calculateScoresAndSignals(answers);
+      //       const { g8Score, sarcFScore, distressSignal } =
+      //         this.calculateScoresAndSignals(answers);
 
-            // Check if the visit has any unresolved signals
-            return (
-              g8Score < g8ScoreMapping.thresold ||
-              sarcFScore >= sarcFScoreMapping.thresold ||
-              distressSignal
-            );
-          }),
-        )
-      ).filter(Boolean).length;
+      //       // Check if the visit has any unresolved signals
+      //       return (
+      //         g8Score < g8ScoreMapping.thresold ||
+      //         sarcFScore >= sarcFScoreMapping.thresold ||
+      //         distressSignal
+      //       );
+      //     }),
+      //   )
+      // ).filter(Boolean).length;
+
+      const totalSignals = await this.visitRepository
+        .getTable()
+        .where({ signals: { $ne: null } })
+        .countDocuments();
 
       return ResponseDto.success(
         {

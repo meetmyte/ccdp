@@ -23,6 +23,8 @@ import {
   ConsultationSchema,
 } from './schemas/consultations.schema';
 import { ConsultationRepository } from './repositories/consultation.repository';
+import { Feedback, FeedbackSchema } from './schemas/feedback.schema';
+import { FeedbackRepository } from './repositories/feedback.repository';
 
 @Module({
   imports: [
@@ -40,6 +42,10 @@ import { ConsultationRepository } from './repositories/consultation.repository';
         name: Consultation.name,
         schema: ConsultationSchema,
       },
+      {
+        name: Feedback.name,
+        schema: FeedbackSchema,
+      },
     ]),
   ],
   providers: [
@@ -50,6 +56,7 @@ import { ConsultationRepository } from './repositories/consultation.repository';
     OpenAiService,
     DoctorPatientAssignmentRepository,
     ConsultationRepository,
+    FeedbackRepository,
   ],
   exports: [
     MongooseModule,
@@ -60,6 +67,7 @@ import { ConsultationRepository } from './repositories/consultation.repository';
     OpenAiService,
     DoctorPatientAssignmentRepository,
     ConsultationRepository,
+    FeedbackRepository,
   ], // Exporting MongooseModule and UserRepository
 })
 export class SharedModule {}

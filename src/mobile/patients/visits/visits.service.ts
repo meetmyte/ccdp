@@ -8,6 +8,11 @@ import {
 } from '@nestjs/common';
 import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { HelperService } from 'src/helpers/services/helper.service';
+import {
+  distressMapping,
+  g8ScoreMapping,
+  sarcFScoreMapping,
+} from 'src/helpers/signal-scoring';
 import { AnswersRepository } from 'src/shared/repositories/answers.repository';
 import { QuestionsCategoryRepository } from 'src/shared/repositories/questions-category.repository';
 import { VisitsRepository } from 'src/shared/repositories/visits.repository';
@@ -55,42 +60,6 @@ export class VisitsService {
       throw new InternalServerErrorException('Unable to create visit');
     }
   }
-
-  // async storeAnswer(
-  //   visitId: string,
-  //   categoryId: string,
-  //   questionId: string,
-  //   answer: any,
-  // ): Promise<ResponseDto> {
-  //   // Check if the visit exists
-  //   const visit: any = await this.visitRepository.findVisitById(visitId);
-  //   if (!visit) throw new NotFoundException('Visit not found');
-
-  //   // Check if the category exists
-  //   const category =
-  //     await this.questionsCategoryRepository.findById(categoryId);
-  //   if (!category) throw new NotFoundException('Category not found');
-
-  //   // Check if the question exists within the specified category
-  //   const questionExists = category.questions.some(
-  //     (question) => question._id.toString() === questionId,
-  //   );
-  //   if (!questionExists) {
-  //     throw new NotFoundException(
-  //       'Question not found in the specified category',
-  //     );
-  //   }
-
-  //   // Proceed to store or update the answer
-  //   await this.answerRepository.createOrUpdateAnswer(
-  //     visit._id,
-  //     categoryId,
-  //     questionId,
-  //     answer,
-  //   );
-
-  //   return ResponseDto.success(null, 'Answer stored/updated successfully');
-  // }
 
   async storeAnswer(
     visitId: string,
@@ -260,136 +229,6 @@ export class VisitsService {
     return ResponseDto.success(null, 'Answer stored successfully');
   }
 
-  // async getAnswersByVisitId(visitId: string): Promise<ResponseDto> {
-  //   try {
-  //     const questions =
-  //       await this.questionsCategoryRepository.findAllQuestions();
-  //     const answers = await this.answerRepository.getAnswersByVisitId(visitId);
-
-  //     // Create a map to store answers by questionId for easy access
-  //     const answerMap = new Map();
-  //     answers.forEach((answer) => {
-  //       answerMap.set(answer.questionId.id, answer.answer);
-  //     });
-
-  //     // Map each question to its answer if available
-  //     const groupedQuestions = questions.map((category) => ({
-  //       _id: category._id,
-  //       name: category.name,
-  //       createdAt: category.createdAt,
-  //       updatedAt: category.updatedAt,
-  //       questions: category.questions.map((question) => {
-  //         const answerData = answerMap.get(question._id.toString()) || [];
-
-  //         // Extract main question answer if it exists
-  //         const mainAnswer =
-  //           answerData.find((a) => a.text === question.text)?.answer || null;
-
-  //         // Map sub-questions with their answers
-  //         const subQuestionsWithAnswers =
-  //           question.subQuestions?.map((subQ) => {
-  //             const subAnswer =
-  //               answerData.find((a) => a.text === subQ.text)?.answer || null;
-  //             return { ...subQ, answer: subAnswer };
-  //           }) || [];
-
-  //         // Return the question with main answer and updated sub-questions
-  //         return {
-  //           ...question.toJSON(),
-  //           answer: mainAnswer,
-  //           subQuestions: subQuestionsWithAnswers,
-  //         };
-  //       }),
-  //     }));
-
-  //     return ResponseDto.success(
-  //       groupedQuestions,
-  //       'Answers retrieved successfully',
-  //     );
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Failed to retrieve answers for visitId: ${visitId}`,
-  //       error.stack,
-  //     );
-  //     throw new InternalServerErrorException('Unable to retrieve answers');
-  //   }
-  // }
-
-  // async getAnswersByVisitId(visitId: string): Promise<ResponseDto> {
-  //   try {
-  //     const questions =
-  //       await this.questionsCategoryRepository.findAllQuestions();
-  //     const answers = await this.answerRepository.getAnswersByVisitId(visitId);
-
-  //     // Create a map to store answers by questionId for easy access
-  //     const answerMap = new Map();
-  //     answers.forEach((answer) => {
-  //       answerMap.set(answer.questionId.id, answer.answer);
-  //     });
-
-  //     // Map each question to its answer if available
-  //     const groupedQuestions = questions.map((category) => ({
-  //       _id: category._id,
-  //       name: category.name,
-  //       createdAt: category.createdAt,
-  //       updatedAt: category.updatedAt,
-  //       questions: category.questions.map((question) => {
-  //         const answerData = answerMap.get(question._id.toString()) || [];
-
-  //         // Extract main question answer if it exists
-  //         let mainAnswer = null;
-  //         if (question.type === 'interactive_image') {
-  //           mainAnswer =
-  //             answerData.find((a) => a.text === question.text)?.answer || null;
-  //         } else {
-  //           mainAnswer =
-  //             answerData.find((a) => a.text === question.text)?.answer || null;
-  //         }
-
-  //         // Map sub-questions with their answers
-  //         const subQuestionsWithAnswers =
-  //           question.subQuestions?.map((subQ) => {
-  //             const subAnswer = answerData.find(
-  //               (a) => a.text === subQ.text,
-  //             )?.answer;
-
-  //             // Ensure `false` or empty string values are preserved correctly
-  //             return {
-  //               ...subQ,
-  //               answer: subAnswer !== undefined ? subAnswer : null,
-  //             };
-  //           }) || [];
-
-  //         // Prepare the question object
-  //         const questionObject = {
-  //           ...question.toJSON(),
-  //           subQuestions: subQuestionsWithAnswers,
-  //         };
-
-  //         // Remove the answer key if there are sub-questions
-  //         if (subQuestionsWithAnswers.length > 0) {
-  //           delete questionObject.answer;
-  //         } else {
-  //           questionObject.answer = mainAnswer;
-  //         }
-
-  //         return questionObject;
-  //       }),
-  //     }));
-
-  //     return ResponseDto.success(
-  //       groupedQuestions,
-  //       'Answers retrieved successfully',
-  //     );
-  //   } catch (error) {
-  //     this.logger.error(
-  //       `Failed to retrieve answers for visitId: ${visitId}`,
-  //       error.stack,
-  //     );
-  //     throw new InternalServerErrorException('Unable to retrieve answers');
-  //   }
-  // }
-
   async getAnswersByVisitId(visitId: string): Promise<ResponseDto> {
     try {
       const questions =
@@ -515,8 +354,14 @@ export class VisitsService {
         return acc;
       }, []);
 
+      const { g8Score, sarcFScore, distressSignal } =
+        this.calculateScoresAndSignals(answers);
+
       const profile = await this.generatePatientProfileUsingAi(groupedAnswers);
-      await this.visitRepository.updateVisit(visitId, { summary: profile });
+      await this.visitRepository.updateVisit(visitId, {
+        summary: profile,
+        signals: { g8Score, sarcFScore, distressSignal },
+      });
 
       // Step 3: Use the AI service to generate a profile based on grouped answers
       // const aiProfile = await this.aiService.generateProfile(groupedAnswers);
@@ -679,5 +524,52 @@ export class VisitsService {
     } catch (error) {
       throw new InternalServerErrorException('Failed to update signal status');
     }
+  }
+
+  public calculateScoresAndSignals(answers: any[]): {
+    g8Score: number;
+    sarcFScore: number;
+    distressSignal: boolean;
+  } {
+    let g8Score = 0;
+    let sarcFScore = 0;
+    let distressSignal = false;
+
+    answers.forEach((answer) => {
+      const questionText = answer.questionId?.text || '';
+      const userResponse = answer.answer?.[0]?.answer || '';
+
+      // Debugging logs for troubleshooting
+      console.log('Processing Question:', questionText);
+      console.log('User Response:', userResponse);
+
+      // G8 Scoring
+      if (g8ScoreMapping[questionText]) {
+        const score = g8ScoreMapping[questionText][userResponse] ?? 0;
+        g8Score += score;
+      } else {
+        console.log(`Unmapped G8 Question: ${questionText}`);
+      }
+
+      // Sarc-F Scoring
+      if (sarcFScoreMapping[questionText]) {
+        const score = sarcFScoreMapping[questionText][userResponse] ?? 0;
+        sarcFScore += score;
+      } else {
+        console.log(`Unmapped Sarc-F Question: ${questionText}`);
+      }
+
+      // Distress Signal
+      if (
+        answer.questionId?.type === 'scale' &&
+        typeof userResponse === 'number' &&
+        userResponse > distressMapping.thresold &&
+        answer.categoryId.name === 'Distress Screening'
+      ) {
+        distressSignal = true;
+      }
+    });
+
+    return { g8Score, sarcFScore, distressSignal };
   }
 }

@@ -24,6 +24,9 @@ export class Visit {
 
   @Prop({ type: String, required: false, default: null })
   signalComments: string;
+
+  @Prop({ type: Object, required: false, default: null }) // Add the summary field
+  signals?: Record<string, any>; // Use Record to allow storing JSON
 }
 
 export const VisitsSchema = SchemaFactory.createForClass(Visit);
