@@ -48,7 +48,7 @@ export class PatientsService {
     }
 
     // Generate unique code for the patient (for example: medicare code)
-    const hospital_code = await this.helperService.generateUniqueCode();
+    const hospital_code = await this.helperService.generateUniqueCode(true, false);
 
     // Create a new patient and save to the database
     const newPatient = await this.userRepository.create({

@@ -8,6 +8,7 @@ import { PaginationFilterDto } from 'src/helpers/dto/paginationFilter.dto';
 import { doctorAddTemplate } from 'src/helpers/emails/doctor-add-template';
 import { EmailService } from 'src/helpers/services/email.service';
 import { JwtService } from '@nestjs/jwt';
+import { HelperService } from 'src/helpers/services/helper.service';
 
 @Injectable()
 export class DoctorService {
@@ -16,6 +17,8 @@ export class DoctorService {
     private emailService: EmailService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private helperService: HelperService
+
   ) {}
 
   async addDoctor(payload: CreateDoctorDto): Promise<ResponseDto> {
@@ -34,7 +37,8 @@ export class DoctorService {
           400,
         );
       }
-
+      const hospital_code = await this.helperService.generateUniqueCode(false, true);
+    
       const doctor = {
         email: payload.email,
         mobile_no: payload.mobile,
@@ -45,10 +49,12 @@ export class DoctorService {
         is_mobile_verified: false,
         is_active: false,
         role: USER_TYPE.DOCTOR,
+        is_invited: true,
+        hospital_code
       };
-
+      console.log('doctor',doctor)
       const savedDoctor: any = await this.userRepository.create(doctor);
-
+      console.log('savedDoctor',savedDoctor)
       // Generate verification token
       const verificationToken = this.jwtService.sign(
         { email: savedDoctor.email, id: savedDoctor._id },
@@ -58,20 +64,20 @@ export class DoctorService {
       const verificationUrl = `${this.configService.get<string>(
         'BACKEND_URL',
       )}/doctor/verify?token=${verificationToken}`;
-      console.log("🚀 ~ DoctorService ~ addDoctor ~ verificationUrl:", verificationUrl)
 
       // Send verification email
       const emailHtml = doctorAddTemplate(
         doctor.first_name,
         doctor.last_name,
-        verificationUrl,
+        hospital_code,
       );
-
+      
       await this.emailService.sendMail(
         savedDoctor.email,
         'Welcome to the Health-Connect Platform',
         emailHtml,
       );
+      console.log("🚀 ~ DoctorService ~ addDoctor ~ verificationUrl:", verificationUrl)
 
       return ResponseDto.success(
         savedDoctor,

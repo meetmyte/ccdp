@@ -85,12 +85,13 @@ export class UserRepository {
     return this.userModel
       .findOne({ hospital_code })
       .select(
-        '_id first_name last_name mobile_no date_of_birth gender medicare_code',
+        '_id first_name last_name mobile_no date_of_birth gender medicare_code role',
       ) // Specify the fields you want
       .exec();
   }
 
   async findInactiveMobile(mobile_no, is_active = true) {
+    console.log('mobile_no',generateHash(mobile_no))
     return await this.userModel.findOne({
       mobileHash: generateHash(mobile_no),
     });

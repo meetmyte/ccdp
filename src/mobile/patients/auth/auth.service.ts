@@ -10,6 +10,7 @@ import { otpLoginTemplate } from 'src/helpers/emails/logn-otp-template';
 import { JwtService } from '@nestjs/jwt';
 import { TwilioService } from 'src/helpers/services/twillio.service';
 import { USER_TYPE } from 'src/helpers/enums';
+import { VerifyDoctorDto } from './dto/verify-doctor.dto';
 
 @Injectable()
 export class AuthService {
@@ -40,6 +41,7 @@ export class AuthService {
 
   async verifyHospitalCode(code: string): Promise<ResponseDto> {
     const hospitalCode = await this.userRepository.findByHospitalCode(code);
+    console.log(hospitalCode,'hospitalCode')
     if (hospitalCode) {
       return ResponseDto.success(
         hospitalCode,
@@ -71,8 +73,39 @@ export class AuthService {
     return ResponseDto.success(null, 'OTP sent to the mobile number');
   }
 
+  async verifyDoctorDetails(
+    hospitalCode: string,
+    payload: VerifyDoctorDto,
+  ): Promise<ResponseDto> {
+    const doctor = await this.userRepository.findByHospitalCode(hospitalCode);
+  
+    if (!doctor) {
+      return ResponseDto.badRequest(
+        null,
+        'Hospital code or doctor details are incorrect',
+      );
+    }
+  
+    const otp = this.generateOtp();
+    await this.updateDoctorOtp(doctor._id, otp);
+    await this.userRepository.updateById(doctor._id, { ...payload, otp });
+  
+    await this.sendOtpBySms(doctor.mobile_no, otp);
+    return ResponseDto.success(null, 'OTP sent to the mobile number');
+  }
+  
+  private async updateDoctorOtp(
+    doctorId: string,
+    otp: number,
+  ): Promise<void> {
+    await this.userRepository.updateById(doctorId, { otp });
+    // TODO: Send OTP via SMS
+    // await this.smsService.sendOtp(mobile, otp.toString());
+  }
+  
   async resendOtp(resendOtpDto: ResendOtpDto): Promise<ResponseDto> {
     const { identifier } = resendOtpDto;
+    console.log('identifier',identifier)
     const isMobile = /^\d{10}$/.test(identifier); // Assuming mobile number is 10 digits
     let user: any;
     if (isMobile) {
@@ -174,7 +207,7 @@ export class AuthService {
       }
     }
 
-    if (!user?.is_mobile_verified && user.role == USER_TYPE.PATIENT) {
+    if (!user?.is_mobile_verified && user.role == USER_TYPE.PATIENT || !user?.is_mobile_verified && user.role == USER_TYPE.DOCTOR) {
       return ResponseDto.success(null, 'mobile is not verified', 301);
     }
 
