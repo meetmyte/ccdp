@@ -242,8 +242,8 @@ export class AuthService {
     }
 
     if (
-      user._id.toString() == '679dccf06a69604d01e0ea01' ||
-      user._id.toString() == '67a21058c57ee9227dd35f68' ||
+      user.email == 'patient@yopmail.com' ||
+      user.email == 'dr@yopmail.com' ||
       user.login_otp == 1312 ||
       user.login_otp == 899878
     ) {

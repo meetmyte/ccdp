@@ -56,6 +56,9 @@ $ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
+
+# Run seeder
+$ node dist/seeds/seeds.js
 ```
 
 ## Resources

@@ -1,4 +1,3 @@
-// src/seeds/data/categoriesAndQuestions.data.ts
 export default [
   {
     name: 'Reason for Visit',
@@ -141,76 +140,76 @@ export default [
     name: 'Lifestyle and Habits',
     questions: [
       {
-        text: 'Can you speak about your smoking habits, if any?',
-        type: 'multiple',
-        subQuestions: [
-          {
-            text: 'How many years have you smoked tobacco?',
-            type: 'number',
-            unit: 'years',
-          },
-          {
-            text: 'How many packs of cigarettes per day?',
-            type: 'number',
-            unit: 'packs per day',
-          },
-          { text: "No, I don't have smoking habits", type: 'boolean' },
-        ],
+        text: 'Can you tell us about your smoking habits? If you smoke, how many years have you been smoking and how many packs do you typically smoke per day?',
+        type: 'text',
+        // subQuestions: [
+        //   {
+        //     text: 'How many years have you smoked tobacco?',
+        //     type: 'number',
+        //     unit: 'years',
+        //   },
+        //   {
+        //     text: 'How many packs of cigarettes per day?',
+        //     type: 'number',
+        //     unit: 'packs per day',
+        //   },
+        //   { text: "No, I don't have smoking habits", type: 'boolean' },
+        // ],
       },
       {
-        text: 'Can you speak about your alcohol consumption?',
-        type: 'multiple',
-        subQuestions: [
-          {
-            text: 'How many drinks per day?',
-            type: 'number',
-            unit: 'drinks per day',
-          },
-          {
-            text: 'How many drinks per week?',
-            type: 'number',
-            unit: 'drinks per week',
-          },
-          { text: "No, I don't have drinking habits", type: 'boolean' },
-        ],
+        text: 'Can you tell us about your alcohol consumption? If you consume alcohol, how many drinks do you have per day or per week?',
+        type: 'text',
+        // subQuestions: [
+        //   {
+        //     text: 'How many drinks per day?',
+        //     type: 'number',
+        //     unit: 'drinks per day',
+        //   },
+        //   {
+        //     text: 'How many drinks per week?',
+        //     type: 'number',
+        //     unit: 'drinks per week',
+        //   },
+        //   { text: "No, I don't have drinking habits", type: 'boolean' },
+        // ],
       },
       {
-        text: 'Can you speak about your drug consumption, such as cannabis, cocaine, heroin, or any other drugs?',
-        type: 'multiple',
-        subQuestions: [
-          {
-            text: 'Please specify your drug consumption',
-            type: 'mixed',
-            options: ['cannabis', 'cocaine', 'heroin'],
-          },
-          {
-            text: 'any other drugs?',
-            type: 'text',
-          },
-          {
-            text: 'times',
-            type: 'number',
-            timeUnit: ['per month', 'per week', 'per day', 'per year'],
-          },
-          {
-            text: "No, I don't consume any drugs",
-            type: 'boolean',
-          },
-        ],
+        text: 'Can you tell us about your drug consumption? If you consume drugs such as cannabis, cocaine, heroin, or others, please specify which ones. Also, mention how frequently you consume them (per day, per week, per month, or per year). If you do not consume any drugs, please indicate that as well.',
+        type: 'text',
+        // subQuestions: [
+        //   {
+        //     text: 'Please specify your drug consumption',
+        //     type: 'mixed',
+        //     options: ['cannabis', 'cocaine', 'heroin'],
+        //   },
+        //   {
+        //     text: 'any other drugs?',
+        //     type: 'text',
+        //   },
+        //   {
+        //     text: 'times',
+        //     type: 'number',
+        //     timeUnit: ['per month', 'per week', 'per day', 'per year'],
+        //   },
+        //   {
+        //     text: "No, I don't consume any drugs",
+        //     type: 'boolean',
+        //   },
+        // ],
       },
       {
-        text: 'Are there any significant lifestyle changes or stressors that have recently occurred?',
-        type: 'multiple',
-        subQuestions: [
-          {
-            text: 'Please describe any recent lifestyle changes or stressors.',
-            type: 'text',
-          },
-          {
-            text: "No, I haven't experienced any significant lifestyle changes recently.",
-            type: 'boolean',
-          },
-        ],
+        text: 'Are there any significant lifestyle changes or stressors that have recently occurred? If yes, please describe them in detail.',
+        type: 'text',
+        // subQuestions: [
+        //   {
+        //     text: 'Please describe any recent lifestyle changes or stressors.',
+        //     type: 'text',
+        //   },
+        //   {
+        //     text: "No, I haven't experienced any significant lifestyle changes recently.",
+        //     type: 'boolean',
+        //   },
+        // ],
       },
     ],
   },
@@ -218,18 +217,18 @@ export default [
     name: 'Family Medical History',
     questions: [
       {
-        text: 'Is there any significant medical history in your family, such as heart disease, diabetes, cancer, or genetic disorders?',
-        type: 'multiple',
-        subQuestions: [
-          {
-            text: 'Please describe any significant medical history in your family.',
-            type: 'text',
-          },
-          {
-            text: 'No, there is no significant medical history in my family.',
-            type: 'boolean',
-          },
-        ],
+        text: 'Is there any significant medical history in your family, such as heart disease, diabetes, cancer, or genetic disorders? If yes, please describe it. If there is no significant medical history, please indicate that as well.',
+        type: 'text',
+        // subQuestions: [
+        //   {
+        //     text: 'Please describe any significant medical history in your family.',
+        //     type: 'text',
+        //   },
+        //   {
+        //     text: 'No, there is no significant medical history in my family.',
+        //     type: 'boolean',
+        //   },
+        // ],
       },
     ],
   },

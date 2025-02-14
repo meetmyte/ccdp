@@ -37,7 +37,7 @@ export class AdminAuthService {
         password: hashedPassword, // Store hashed password
         role: USER_TYPE.ADMIN, // Set the role as 'admin'
         is_active: true, // By default, set admin as active
-        mobile_no: "1312312332"
+        mobile_no: `${Date.now()}`,
       };
 
       await this.userRepository.create(newUser); // Use repository to create the user
@@ -48,7 +48,7 @@ export class AdminAuthService {
   }
 
   async loginAdmin(email, password): Promise<ResponseDto> {
-    console.log('test')
+    console.log('test');
     try {
       const admin = await this.userRepository.findByEmail(email);
       // Ensure the user is an admin and the password is valid
