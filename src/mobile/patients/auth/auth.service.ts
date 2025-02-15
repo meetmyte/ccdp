@@ -244,6 +244,7 @@ export class AuthService {
     if (
       user.email == 'patient@yopmail.com' ||
       user.email == 'dr@yopmail.com' ||
+      user.email == 'doctor@yopmail.com' ||
       user.login_otp == 1312 ||
       user.login_otp == 899878
     ) {

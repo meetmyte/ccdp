@@ -425,14 +425,13 @@ export class DoctorsService {
     try {
       const openai = this.openAiService.getClient(); // Get the OpenAI client
 
+      // **Patient Information:**
+      // Name: ${patient.first_name || 'N/A'} ${patient.last_name || ''}
+      // Email: ${patient.email || 'N/A'}
+      // Medical ID: ${patient.medicare_code || 'N/A'}
+      // Date of Birth: ${patient.date_of_birth || 'N/A'}
       const promptTemplate = `
         You are an advanced medical assistant AI. Based on the following doctor's consultation conversation and patient information, generate a detailed and coherent medical report suitable for both patients and medical professionals.
-    
-        **Patient Information:**
-        Name: ${patient.first_name || 'N/A'} ${patient.last_name || ''}
-        Email: ${patient.email || 'N/A'}
-        Medical ID: ${patient.medicare_code || 'N/A'}
-        Date of Birth: ${patient.date_of_birth || 'N/A'}
     
         **Doctor's Consultation:**
         ${doctorConversation}

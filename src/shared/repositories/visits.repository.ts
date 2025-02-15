@@ -73,7 +73,7 @@ export class VisitsRepository {
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)
-      .lean();
+      .exec();
 
     if (!visits || visits.length === 0) {
       return { visits, totalCount };
