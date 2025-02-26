@@ -27,6 +27,12 @@ export class DoctorPatientAssignmentRepository {
     return assignment.save();
   }
 
+  async findByDoctorId(doctorId: string): Promise<any> {
+    return await this.assignmentModel
+      .find({ doctorId: new Types.ObjectId(doctorId) })
+      .exec();
+  }
+
   //   async getAssignedPatientsWithPagination(
   //     doctorId: string,
   //     filters: any,

@@ -15,9 +15,14 @@ export class HelperService {
 
     this.bucketName = process.env.AWS_S3_BUCKET_NAME; // Define your bucket name in environment variables
   }
-  generateUniqueCode(): string {
-    const prefix = 'PT';
-
+  generateUniqueCode(isPatient:boolean, isDoctor:boolean): string {
+    let prefix:string = '';
+    if (isDoctor == true) {
+      prefix = 'DT';
+    } 
+    if (isPatient === true) {
+      prefix = 'PT';
+    }
     // Generate a random 2-digit number (e.g., 01)
     const randomDigits = Math.floor(10 + Math.random() * 90).toString(); // Always 2 digits
 

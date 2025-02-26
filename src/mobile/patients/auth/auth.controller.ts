@@ -13,6 +13,7 @@ import { VerifyPatientDto } from './dto/verify-patient.dto';
 import { ResendOtpDto } from './dto/resend-otp.dto';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { LoginDto } from './dto/login.dto';
+import { VerifyDoctorDto } from './dto/verify-doctor.dto';
 
 @Controller('patient')
 @ApiTags('Patient Onboarding (MOBILE)')
@@ -59,6 +60,27 @@ export class AuthController {
       hospitalCode,
       verifyPatientDto,
     );
+  }
+
+  @Post('onboard/verify-doctor/:hospitalCode')
+  @ApiOperation({
+    summary: 'Verify doctor details and send OTP for mobile verification',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'OTP sent to the mobile number.',
+    type: ResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Doctor details or hospital code is incorrect.',
+    type: ResponseDto,
+  })
+  async verifyDoctorDetails(
+    @Param('hospitalCode') hospitalCode: string,
+    @Body(ValidationPipe) verifyDoctorDto: VerifyDoctorDto,
+  ): Promise<ResponseDto> {
+    return this.authService.verifyDoctorDetails(hospitalCode, verifyDoctorDto);
   }
 
   @Post('resend-otp')

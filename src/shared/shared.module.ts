@@ -25,6 +25,8 @@ import {
 import { ConsultationRepository } from './repositories/consultation.repository';
 import { Feedback, FeedbackSchema } from './schemas/feedback.schema';
 import { FeedbackRepository } from './repositories/feedback.repository';
+import { Chat, ChatSchema } from './schemas/chat.schema';
+import { ChatRepository } from './repositories/chat.repository';
 
 @Module({
   imports: [
@@ -46,6 +48,10 @@ import { FeedbackRepository } from './repositories/feedback.repository';
         name: Feedback.name,
         schema: FeedbackSchema,
       },
+      {
+        name: Chat.name,
+        schema: ChatSchema,
+      },
     ]),
   ],
   providers: [
@@ -57,6 +63,7 @@ import { FeedbackRepository } from './repositories/feedback.repository';
     DoctorPatientAssignmentRepository,
     ConsultationRepository,
     FeedbackRepository,
+    ChatRepository,
   ],
   exports: [
     MongooseModule,
@@ -68,6 +75,7 @@ import { FeedbackRepository } from './repositories/feedback.repository';
     DoctorPatientAssignmentRepository,
     ConsultationRepository,
     FeedbackRepository,
+    ChatRepository,
   ], // Exporting MongooseModule and UserRepository
 })
 export class SharedModule {}

@@ -196,6 +196,7 @@ export class ChatbotController {
   async askDoctor(
     @Body('question') question: string,
     @Body('patientId') patientId: string,
+    @Request() req: any,
   ): Promise<any> {
     if (!question || !patientId) {
       throw new BadRequestException('Question and Patient ID are required');
@@ -204,11 +205,55 @@ export class ChatbotController {
     const answer = await this.chatbotService.generateDoctorResponse(
       question,
       patientId,
+      req.user.userId,
     );
     return {
       statusCode: 200,
       message: 'Response generated successfully',
       data: { answer },
+    };
+  }
+
+  @UseGuards(PatientGuard)
+  @Get('history/patient')
+  @ApiOperation({ summary: 'Get chat history for a patient' })
+  @ApiResponse({
+    status: 200,
+    description: 'Chat history retrieved successfully',
+  })
+  async getPatientChatHistory(@Request() req) {
+    const patientId = req.user.userId;
+    const chatHistory =
+      await this.chatbotService.getChatHistoryForPatient(patientId);
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Chat history retrieved successfully',
+      data: chatHistory,
+    };
+  }
+
+  @UseGuards(DoctorGuard)
+  @Get('history/doctor/:patientId')
+  @ApiOperation({
+    summary: 'Get chat history for a doctor and specific patient',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Doctor chat history retrieved successfully',
+  })
+  async getDoctorChatHistory(
+    @Request() req,
+    @Param('patientId') patientId: string,
+  ) {
+    const doctorId = req.user.userId;
+    const chatHistory = await this.chatbotService.getChatHistoryForDoctor(
+      patientId,
+      doctorId,
+    );
+    return {
+      statusCode: HttpStatus.OK,
+      message: 'Doctor chat history retrieved successfully',
+      data: chatHistory,
     };
   }
 }

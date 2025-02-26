@@ -31,17 +31,19 @@ import { JwtAuthGuard } from 'src/shared/guards/jwt.guard';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { PaginationFilterDto } from 'src/helpers/dto/paginationFilter.dto';
 import { DoctorsService } from 'src/mobile/doctors/doctors.service';
+import { AdminGuard } from 'src/shared/guards/admin.guard';
 
 @ApiTags('Visits')
 @Controller('visits')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, PatientGuard)
+@UseGuards(JwtAuthGuard)
 export class VisitsController {
   constructor(
     private readonly visitsService: VisitsService,
     private readonly doctorsService: DoctorsService,
   ) {}
 
+  @UseGuards(PatientGuard)
   @Get('questions')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all questions' })
@@ -80,6 +82,7 @@ export class VisitsController {
   //   return this.visitsService.createVisit(patientId);
   // }
 
+  @UseGuards(PatientGuard)
   @Post('plan')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new visit for a patient' })
@@ -163,6 +166,7 @@ export class VisitsController {
     );
   }
 
+  @UseGuards(PatientGuard)
   @Post(':visitId/answer')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Store or update an answer for a question' })
@@ -213,6 +217,7 @@ export class VisitsController {
     );
   }
 
+  @UseGuards(PatientGuard)
   @Post(':visitId/answers/multiple')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Store or update multiple answers for questions' })
@@ -260,6 +265,7 @@ export class VisitsController {
     return this.visitsService.storeMultipleAnswers(visitId, answers);
   }
 
+  @UseGuards(PatientGuard)
   @Get('list')
   @ApiOperation({
     summary: 'Get all visits of a patient',
@@ -296,6 +302,7 @@ export class VisitsController {
     return this.visitsService.allVistisOfPatient(req.user.userId);
   }
 
+  @UseGuards(PatientGuard)
   @Get(':visitId/answers')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Retrieve answers for a specific visit' })
@@ -314,6 +321,7 @@ export class VisitsController {
     return this.visitsService.getAnswersByVisitId(visitId);
   }
 
+  @UseGuards(PatientGuard)
   @Get(':visitId/profile')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -336,6 +344,7 @@ export class VisitsController {
     return await this.visitsService.generatePatientProfile(visitId);
   }
 
+  @UseGuards(PatientGuard)
   @Patch(':visitId/profile')
   @ApiOperation({ summary: 'Update patient profile summary' })
   @ApiParam({
@@ -367,6 +376,7 @@ export class VisitsController {
     return await this.visitsService.updatePatientProfile(visitId, summary);
   }
 
+  @UseGuards(PatientGuard)
   @Get('patient/consultation/list')
   @ApiOperation({
     summary: 'List consultations for the logged-in doctor with filters',
@@ -412,6 +422,7 @@ export class VisitsController {
     return this.doctorsService.listConsultationsByDoctorId(paginationFilterDto);
   }
 
+  @UseGuards(AdminGuard)
   @Post('signal/status/:vistiId')
   @ApiOperation({ summary: 'Update signal status for a visit' })
   @ApiParam({
