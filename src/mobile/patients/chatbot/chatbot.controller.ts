@@ -8,12 +8,19 @@ import {
   UseGuards,
   Request,
   Param,
+  UseInterceptors,
+  UploadedFile,
+  Delete,
+  Query,
+  Get,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -23,13 +30,75 @@ import { ResponseDto } from 'src/helpers/dto/response.dto';
 import { JwtAuthGuard } from 'src/shared/guards/jwt.guard';
 import { PatientGuard } from 'src/shared/guards/patient.guard';
 import { DoctorGuard } from 'src/shared/guards/doctor.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Chatbot')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('chatbot')
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
+
+  @Post("upload-audio")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Upload a single audio chunk for transcription" })
+  async uploadAudio(
+    @Request() req,
+    @Body() body: { audio: string; sessionId: string; chunkId: string }
+  ): Promise<ResponseDto> {
+    if (!body.audio) {
+      throw new BadRequestException("No audio data provided");
+    }
+  
+    const { sessionId, chunkId } = body;
+    if (!sessionId || !chunkId) {
+      throw new BadRequestException("Missing sessionId or chunkId");
+    }
+    console.log('test')
+    await this.chatbotService.uploadAudioBase64(body, sessionId, chunkId);
+    return ResponseDto.success({ sessionId, chunkId }, "Audio chunk received successfully");
+  }
+  
+  
+  @Get("transcribe")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Transcribe a specific audio chunk" })
+  @ApiQuery({
+    name: "sessionId",
+    required: true,
+    description: "Session ID of the uploaded audio",
+  })
+  @ApiQuery({
+    name: "chunkId",
+    required: true,
+    description: "Chunk ID to transcribe",
+  })
+  async transcribeAudio(@Query("sessionId") sessionId: string, @Query("chunkId") chunkId: string) {
+    if (!sessionId || !chunkId) {
+      throw new BadRequestException("Missing sessionId or chunkId");
+    }
+    
+    const transcript = await this.chatbotService.transcribeChunk(sessionId, chunkId);
+    console.log(`Transcript for ${sessionId}/${chunkId}:`, transcript);
+  
+    return ResponseDto.success({ transcript }, "Transcription completed");
+  }
+    
+  @Delete('cleanup')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete temporary audio file' })
+  @ApiQuery({
+    name: 'sessionId',
+    required: true,
+    description: 'Session ID of the uploaded audio',
+  })
+  async cleanupAudio(@Query('sessionId') sessionId: string) {
+    if (!sessionId) {
+      throw new BadRequestException('Missing sessionId');
+    }
+    await this.chatbotService.cleanupAudio(sessionId);
+    return ResponseDto.success(null, 'Temporary audio file deleted');
+  }
 
   @UseGuards(PatientGuard)
   @Post('ask')

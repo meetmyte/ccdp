@@ -2,6 +2,8 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { OpenAiService } from 'src/shared/service/openai.service';
 import { VisitsRepository } from 'src/shared/repositories/visits.repository';
 import { AnswersRepository } from 'src/shared/repositories/answers.repository';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ChatbotService {
@@ -180,4 +182,77 @@ export class ChatbotService {
       throw new BadRequestException('Failed to generate a response');
     }
   }
+
+  private getTempFilePath(sessionId: string, ext = ".webm"): string {
+    const tempChunkDir = path.join(process.cwd(), "temp_chunks");
+    if (!fs.existsSync(tempChunkDir)) {
+      fs.mkdirSync(tempChunkDir, { recursive: true });
+    }
+    return path.join(tempChunkDir, `${sessionId}${ext}`);
+  }
+  
+  /**
+   * Processes base64 audio data sent from the client.
+   * It removes any data URI prefix, converts the base64 string into a Buffer,
+   * and appends that Buffer to a temporary file identified by sessionId.
+   *
+   * @param body - The request body containing the base64 audio data and an optional filename.
+   * @param sessionId - The unique session identifier for this recording.
+   */
+  async uploadAudioBase64(
+    body: { audio: string },
+    sessionId: string,
+    chunkId: string
+  ): Promise<void> {
+    if (!body.audio) {
+      throw new BadRequestException("No audio data provided");
+    }
+  
+    const base64Data = body.audio.replace(/^data:.*;base64,/, '');
+    const sessionDir = path.join(process.cwd(), "temp_chunks", sessionId);
+    if (!fs.existsSync(sessionDir)) {
+      fs.mkdirSync(sessionDir, { recursive: true });
+    }
+  
+    const chunkFilePath = path.join(sessionDir, `${chunkId}.mp4`);
+    const buffer = Buffer.from(base64Data, "base64");
+  
+    fs.writeFileSync(chunkFilePath, buffer);
+    console.log(`Chunk saved: ${chunkFilePath}, size=${buffer.length} bytes`);
+  }
+  async transcribeChunk(sessionId: string, chunkId: string): Promise<string> {
+    const chunkFilePath = path.join(process.cwd(), "temp_chunks", sessionId, `${chunkId}.mp4`);
+  
+    if (!fs.existsSync(chunkFilePath)) {
+      throw new BadRequestException("No audio data found for this chunk");
+    }
+  
+    return this.openAiService.transcribeVoiceToText(chunkFilePath);
+  }
+      
+    
+  async transcribeAudio(sessionId: string): Promise<string> {
+    let tempFilePath = this.getTempFilePath(sessionId, '.webm');
+    console.log('tempFilePath',tempFilePath)
+    if (!fs.existsSync(tempFilePath)) {
+      tempFilePath = this.getTempFilePath(sessionId, '.mp4');
+      if (!fs.existsSync(tempFilePath)) {
+        throw new BadRequestException('No audio data for this session');
+      }
+    }
+    return this.openAiService.transcribeVoiceToText(tempFilePath);
+  }
+
+  async cleanupAudio(sessionId: string): Promise<void> {
+    let tempFilePath = this.getTempFilePath(sessionId, '.webm');
+    if (!fs.existsSync(tempFilePath)) {
+      tempFilePath = this.getTempFilePath(sessionId, '.mp4');
+      if (!fs.existsSync(tempFilePath)) {
+        throw new BadRequestException('No audio file found for this session');
+      }
+    }
+    fs.unlinkSync(tempFilePath);
+  }
+
+
 }
