@@ -63,28 +63,25 @@ export class AuthController {
   }
 
   @Post('onboard/verify-doctor/:hospitalCode')
-@ApiOperation({
-  summary: 'Verify doctor details and send OTP for mobile verification',
-})
-@ApiResponse({
-  status: 200,
-  description: 'OTP sent to the mobile number.',
-  type: ResponseDto,
-})
-@ApiResponse({
-  status: 400,
-  description: 'Doctor details or hospital code is incorrect.',
-  type: ResponseDto,
-})
-async verifyDoctorDetails(
-  @Param('hospitalCode') hospitalCode: string,
-  @Body(ValidationPipe) verifyDoctorDto: VerifyDoctorDto,
-): Promise<ResponseDto> {
-  return this.authService.verifyDoctorDetails(
-    hospitalCode,
-    verifyDoctorDto,
-  );
-}
+  @ApiOperation({
+    summary: 'Verify doctor details and send OTP for mobile verification',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'OTP sent to the mobile number.',
+    type: ResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Doctor details or hospital code is incorrect.',
+    type: ResponseDto,
+  })
+  async verifyDoctorDetails(
+    @Param('hospitalCode') hospitalCode: string,
+    @Body(ValidationPipe) verifyDoctorDto: VerifyDoctorDto,
+  ): Promise<ResponseDto> {
+    return this.authService.verifyDoctorDetails(hospitalCode, verifyDoctorDto);
+  }
 
   @Post('resend-otp')
   @ApiOperation({ summary: 'Resend OTP to the provided mobile number' })

@@ -572,4 +572,26 @@ export class VisitsService {
 
     return { g8Score, sarcFScore, distressSignal };
   }
+
+  public async getActiveSignals(patientIds: string[]) {
+    try {
+      const totalSignal = await this.visitRepository
+        .getTable()
+        .where({
+          $or: [
+            { 'signals.g8Score': { $lt: g8ScoreMapping.thresold } }, // G8 score below threshold
+            { 'signals.sarcFScore': { $gte: sarcFScoreMapping.thresold } }, // Sarc-F score meets/exceeds threshold
+            { 'signals.distressSignal': true }, // Distress signal explicitly marked as true
+          ],
+          isSignalResolved: false,
+          signals: { $ne: null },
+          patientId: { $in: patientIds },
+        })
+        .countDocuments();
+      return totalSignal;
+    } catch (error) {
+      console.log('🚀 ~ VisitsService ~ getActiveSignals ~ error:', error);
+      throw new InternalServerErrorException('Something went wrong');
+    }
+  }
 }

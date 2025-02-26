@@ -85,6 +85,7 @@ export class VisitsRepository {
   async getVisitsByMonth(startDate, endDate) {
     const visits = await this.visitModel.find({
       createdAt: { $gte: startDate, $lte: endDate },
+      isSignalResolved: false,
     });
     return visits;
   }
