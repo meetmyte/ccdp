@@ -39,51 +39,59 @@ import { FileInterceptor } from '@nestjs/platform-express';
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotService) {}
 
-  @Post("upload-audio")
+  @Post('upload-audio')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Upload a single audio chunk for transcription" })
+  @ApiOperation({ summary: 'Upload a single audio chunk for transcription' })
   async uploadAudio(
     @Request() req,
-    @Body() body: { audio: string; sessionId: string; chunkId: string }
+    @Body() body: { audio: string; sessionId: string; chunkId: string },
   ): Promise<ResponseDto> {
     if (!body.audio) {
-      throw new BadRequestException("No audio data provided");
+      throw new BadRequestException('No audio data provided');
     }
-  
+
     const { sessionId, chunkId } = body;
     if (!sessionId || !chunkId) {
-      throw new BadRequestException("Missing sessionId or chunkId");
+      throw new BadRequestException('Missing sessionId or chunkId');
     }
-    console.log('test')
+    console.log('test');
     await this.chatbotService.uploadAudioBase64(body, sessionId, chunkId);
-    return ResponseDto.success({ sessionId, chunkId }, "Audio chunk received successfully");
+    return ResponseDto.success(
+      { sessionId, chunkId },
+      'Audio chunk received successfully',
+    );
   }
-  
-  
-  @Get("transcribe")
+
+  @Get('transcribe')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Transcribe a specific audio chunk" })
+  @ApiOperation({ summary: 'Transcribe a specific audio chunk' })
   @ApiQuery({
-    name: "sessionId",
+    name: 'sessionId',
     required: true,
-    description: "Session ID of the uploaded audio",
+    description: 'Session ID of the uploaded audio',
   })
   @ApiQuery({
-    name: "chunkId",
+    name: 'chunkId',
     required: true,
-    description: "Chunk ID to transcribe",
+    description: 'Chunk ID to transcribe',
   })
-  async transcribeAudio(@Query("sessionId") sessionId: string, @Query("chunkId") chunkId: string) {
+  async transcribeAudio(
+    @Query('sessionId') sessionId: string,
+    @Query('chunkId') chunkId: string,
+  ) {
     if (!sessionId || !chunkId) {
-      throw new BadRequestException("Missing sessionId or chunkId");
+      throw new BadRequestException('Missing sessionId or chunkId');
     }
-    
-    const transcript = await this.chatbotService.transcribeChunk(sessionId, chunkId);
+
+    const transcript = await this.chatbotService.transcribeChunk(
+      sessionId,
+      chunkId,
+    );
     console.log(`Transcript for ${sessionId}/${chunkId}:`, transcript);
-  
-    return ResponseDto.success({ transcript }, "Transcription completed");
+
+    return ResponseDto.success({ transcript }, 'Transcription completed');
   }
-    
+
   @Delete('cleanup')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Delete temporary audio file' })
