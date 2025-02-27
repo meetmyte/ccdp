@@ -108,7 +108,7 @@ export class ChatbotController {
     return ResponseDto.success(null, 'Temporary audio file deleted');
   }
 
-  @UseGuards(PatientGuard)
+  @UseGuards(JwtAuthGuard, PatientGuard)
   @Post('ask')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Ask a question and get an AI-generated response' })
@@ -134,7 +134,7 @@ export class ChatbotController {
     return ResponseDto.success({ answer }, 'Response generated successfully');
   }
 
-  @UseGuards(DoctorGuard)
+  @UseGuards(JwtAuthGuard, DoctorGuard)
   @Post('ask-doctor')
   @ApiOperation({
     summary: 'Ask a medical question about a specific patient',
@@ -214,7 +214,7 @@ export class ChatbotController {
     };
   }
 
-  @UseGuards(PatientGuard)
+  @UseGuards(JwtAuthGuard, PatientGuard)
   @Get('history/patient')
   @ApiOperation({ summary: 'Get chat history for a patient' })
   @ApiResponse({
@@ -232,7 +232,7 @@ export class ChatbotController {
     };
   }
 
-  @UseGuards(DoctorGuard)
+  @UseGuards(JwtAuthGuard, DoctorGuard)
   @Get('history/doctor/:patientId')
   @ApiOperation({
     summary: 'Get chat history for a doctor and specific patient',
