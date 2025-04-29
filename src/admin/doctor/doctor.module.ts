@@ -5,6 +5,7 @@ import { UserRepository } from 'src/shared/repositories/user.repository';
 import { SharedModule } from 'src/shared/shared.module';
 import { EmailService } from 'src/helpers/services/email.service';
 import { JwtModule } from '@nestjs/jwt';
+import { HelperService } from 'src/helpers/services/helper.service';
 @Module({
   imports: [
     SharedModule,
@@ -14,6 +15,6 @@ import { JwtModule } from '@nestjs/jwt';
     }),
   ],
   controllers: [DoctorController],
-  providers: [DoctorService, UserRepository, EmailService],
+  providers: [DoctorService, UserRepository, EmailService,HelperService],
 })
 export class DoctorModule {}

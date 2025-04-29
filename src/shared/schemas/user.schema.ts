@@ -44,7 +44,12 @@ export class User {
   @Prop({ default: null })
   login_otp: number;
 
-  @Prop({ default: null, required: false })
+  @Prop({
+    default: null,
+    required: false,
+    set: encryptField,
+    get: decryptField,
+  })
   medicare_code: string;
 
   @Prop({ default: null, required: false })
@@ -82,18 +87,54 @@ function encryptField(value: string): string {
 }
 
 // **Utility function for decryption**
+// function decryptField(value: string): string {
+//   console.log("🚀 ~ decryptField ~ value:", value)
+//   if (!value) return value;
+//   const encryptionKey = Buffer.from(process.env.FIELD_ENCRYPTION_KEY, 'base64');
+//   const [iv, encryptedText] = value.split(':');
+//   const decipher = crypto.createDecipheriv(
+//     'aes-256-cbc',
+//     encryptionKey,
+//     Buffer.from(iv, 'hex'),
+//   );
+//   let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+//   decrypted += decipher.final('utf8');
+//   return decrypted;
+// }
+
 function decryptField(value: string): string {
+  console.log('🚀 ~ decryptField ~ value:', value);
+
   if (!value) return value;
-  const encryptionKey = Buffer.from(process.env.FIELD_ENCRYPTION_KEY, 'base64');
-  const [iv, encryptedText] = value.split(':');
-  const decipher = crypto.createDecipheriv(
-    'aes-256-cbc',
-    encryptionKey,
-    Buffer.from(iv, 'hex'),
-  );
-  let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
-  return decrypted;
+
+  // **Check if the value is already plain text (i.e., not encrypted)**
+  if (!value.includes(':')) {
+    console.log(
+      '🚀 ~ decryptField ~ Detected unencrypted value, returning as-is.',
+    );
+    return value; // Return as-is if not encrypted
+  }
+
+  try {
+    const encryptionKey = Buffer.from(
+      process.env.FIELD_ENCRYPTION_KEY,
+      'base64',
+    );
+    const [iv, encryptedText] = value.split(':');
+
+    const decipher = crypto.createDecipheriv(
+      'aes-256-cbc',
+      encryptionKey,
+      Buffer.from(iv, 'hex'),
+    );
+
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error) {
+    console.error('🚀 ~ decryptField ~ Decryption failed:', error);
+    return value; // Return original value if decryption fails
+  }
 }
 
 // **Middleware to hash `emailHash` and `mobileHash` before saving**

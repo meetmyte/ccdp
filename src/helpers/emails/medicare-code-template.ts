@@ -13,7 +13,6 @@
 //   </div>
 // `;
 
-
 export const medicareCodeTemplate = (
   firstName: string,
   lastName: string,
@@ -75,6 +74,25 @@ export const medicareCodeTemplate = (
         text-decoration: none;
         border-radius: 5px;
         font-weight: bold;
+        margin: 5px;
+      }
+      .cta .disabled {
+        background-color: #999;
+        cursor: not-allowed;
+        position: relative;
+      }
+      .cta .disabled:hover::after {
+        content: 'Coming Soon';
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        white-space: nowrap;
       }
       .footer {
         margin-top: 40px;
@@ -115,13 +133,14 @@ export const medicareCodeTemplate = (
           to access our services.
         </p>
         <p>
-          <strong>Hospital Code: ${medicareCode}</strong>
+          <strong>Patient Code: ${medicareCode}</strong>
         </p>
         <p>Please keep this code safe and secure for your records.</p>
         <p>Thank you for choosing us. We're here to support you every step of the way!</p>
       </div>
       <div class="cta">
-        <a href="http://ccdp-admin-dev.s3-website.ca-central-1.amazonaws.com/" target="_blank">Access Your Account</a>
+        <a href="https://apps.apple.com/us/app/myte-health/id6741458318" target="_blank">Download iOS App</a>
+        <a class="disabled">Download Android App</a>
       </div>
       <div class="footer">
         <p>🙏 Thank you for joining us!</p>

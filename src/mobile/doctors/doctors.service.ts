@@ -15,6 +15,7 @@ import { UpdateConsultationDto } from './dto/update-consultation.dto';
 import { Types } from 'mongoose';
 import { VisitsService } from '../patients/visits/visits.service';
 import { OpenAiService } from 'src/shared/service/openai.service';
+import { g8ScoreMapping, sarcFScoreMapping } from 'src/helpers/signal-scoring';
 
 @Injectable()
 export class DoctorsService {
@@ -278,11 +279,27 @@ export class DoctorsService {
       const todaysConsultations =
         await this.consultationRepository.getTodayTotalCounts(doctorId);
 
+      const assignedPatients =
+        await this.doctorPatientAssignmentRepository.findByDoctorId(doctorId);
+      let totalSignals = 0;
+      if (assignedPatients.length) {
+        const patientIds: any = [
+          ...new Set(
+            assignedPatients.map((patient) => patient.patientId.toString()),
+          ),
+        ];
+
+        totalSignals = await this.visitsService.getActiveSignals(patientIds);
+      }
+      // fetch unique patientIds from the assignedPatients
+
       // Return the response with resolved values
       return ResponseDto.success(
         {
           totalConsultations: getTotalConsultations,
           todaysConsultations: todaysConsultations,
+          totalPatients: assignedPatients.length || 0,
+          totalSignals: totalSignals || 0,
         },
         'Success',
       );
@@ -425,31 +442,50 @@ export class DoctorsService {
     try {
       const openai = this.openAiService.getClient(); // Get the OpenAI client
 
+      // **Patient Information:**
+      // Name: ${patient.first_name || 'N/A'} ${patient.last_name || ''}
+      // Email: ${patient.email || 'N/A'}
+      // Medical ID: ${patient.medicare_code || 'N/A'}
+      // Date of Birth: ${patient.date_of_birth || 'N/A'}
+      // const promptTemplate = `
+      //   You are an advanced medical assistant AI. Based on the following doctor's consultation conversation and patient information, generate a detailed and coherent medical report suitable for both patients and medical professionals.
+
+      //   **Doctor's Consultation:**
+      //   ${doctorConversation}
+
+      //   The report must include the following sections:
+      //   1. **Observations**: Key medical insights and observations drawn from the doctor's discussion and patient data.
+      //   2. **Advice/Recommendations**: Suggestions provided by the doctor to the patient, including actionable steps for treatment or lifestyle modifications.
+      //   3. **Prescriptions**: List any medications prescribed during the consultation, including dosages and instructions.
+      //   4. **Tests/Diagnostics**: Mention any tests or diagnostics recommended by the doctor during the consultation.
+      //   5. **Follow-up Instructions**: Include any follow-up actions, such as scheduling appointments or monitoring symptoms.
+
+      //   Format the report in a structured format, and ensure the language is professional yet easy to understand for patients. Provide the summary as a clear, concise report.
+      // `;
+
+      // const assistantContext = `
+      //   Generate a structured and detailed medical report based on the provided patient data and doctor's consultation. The report should include observations, recommendations, prescriptions, diagnostics, and follow-up instructions.
+      // `;
+
       const promptTemplate = `
-        You are an advanced medical assistant AI. Based on the following doctor's consultation conversation and patient information, generate a detailed and coherent medical report suitable for both patients and medical professionals.
-    
-        **Patient Information:**
-        Name: ${patient.first_name || 'N/A'} ${patient.last_name || ''}
-        Email: ${patient.email || 'N/A'}
-        Medical ID: ${patient.medicare_code || 'N/A'}
-        Date of Birth: ${patient.date_of_birth || 'N/A'}
+        You are an advanced medical assistant AI. Based on the following doctor's consultation conversation, generate a detailed and coherent medical report suitable for both patients and medical professionals.
     
         **Doctor's Consultation:**
         ${doctorConversation}
     
         The report must include the following sections:
-        1. **Observations**: Key medical insights and observations drawn from the doctor's discussion and patient data.
+        1. **Observations**: Key medical insights and observations drawn from the doctor's discussion.
         2. **Advice/Recommendations**: Suggestions provided by the doctor to the patient, including actionable steps for treatment or lifestyle modifications.
         3. **Prescriptions**: List any medications prescribed during the consultation, including dosages and instructions.
         4. **Tests/Diagnostics**: Mention any tests or diagnostics recommended by the doctor during the consultation.
         5. **Follow-up Instructions**: Include any follow-up actions, such as scheduling appointments or monitoring symptoms.
     
-        Format the report in a structured format, and ensure the language is professional yet easy to understand for patients. Provide the summary as a clear, concise report.
-      `;
+        Format the report in a structured manner, ensuring the language is professional yet easy to understand for patients. The report should be clear, concise, and well-organized.
+`;
 
       const assistantContext = `
-        Generate a structured and detailed medical report based on the provided patient data and doctor's consultation. The report should include observations, recommendations, prescriptions, diagnostics, and follow-up instructions.
-      `;
+        Generate a structured and detailed medical report based only on the provided doctor's consultation. The report should include observations, recommendations, prescriptions, diagnostics, and follow-up instructions. Do not include patient information.
+`;
 
       const response = await openai.chat.completions.create({
         model: 'gpt-4o', // Use 'gpt-4' or 'gpt-4-turbo' as needed

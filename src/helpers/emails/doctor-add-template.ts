@@ -13,7 +13,7 @@
 export const doctorAddTemplate = (
   firstName: string,
   lastName: string,
-  verificationLink: string,
+  hospital_code: string
 ): string => `
   <html>
   <head>
@@ -71,6 +71,25 @@ export const doctorAddTemplate = (
         text-decoration: none;
         border-radius: 5px;
         font-weight: bold;
+        margin: 5px;
+      }
+      .cta .disabled {
+        background-color: #999;
+        cursor: not-allowed;
+        position: relative;
+      }
+      .cta .disabled:hover::after {
+        content: 'Coming Soon';
+        position: absolute;
+        bottom: -25px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        white-space: nowrap;
       }
       .footer {
         margin-top: 40px;
@@ -79,8 +98,7 @@ export const doctorAddTemplate = (
         background-color: #192655;
         padding: 20px;
         border-radius: 10px;
-                text-align: center; /* Center-align the content */
-
+        text-align: center;
       }
       .footer p {
         margin: 5px 0;
@@ -100,7 +118,7 @@ export const doctorAddTemplate = (
   <body>
     <div class="container">
       <div class="logo">
-                                <img src="https://myte-social-subscription.s3.ca-central-1.amazonaws.com/asset/myte-logo.png" alt="Myte Cody Logo">
+        <img src="https://myte-social-subscription.s3.ca-central-1.amazonaws.com/asset/myte-logo.png" alt="Myte Cody Logo">
       </div>
       <div class="header">
         Welcome to Our Platform, Dr. ${firstName} ${lastName}!
@@ -116,11 +134,15 @@ export const doctorAddTemplate = (
           connect with a broader patient base.
         </p>
         <p>
+          Doctor Code: <strong>${hospital_code}</strong>
+        </p>
+        <p>
           If you have any questions or need assistance, feel free to reach out to us. We’re here to help.
         </p>
       </div>
       <div class="cta">
-        <a href='${verificationLink}' target="_blank">Verify Your Account</a>
+        <a href="https://apps.apple.com/us/app/myte-health/id6741458318" target="_blank">Download iOS App</a>
+        <a class="disabled">Download Android App</a>
       </div>
       <div class="footer">
         <p>🙏 Thank you for joining us!</p>

@@ -48,7 +48,10 @@ export class PatientsService {
     }
 
     // Generate unique code for the patient (for example: medicare code)
-    const hospital_code = await this.helperService.generateUniqueCode();
+    const hospital_code = await this.helperService.generateUniqueCode(
+      true,
+      false,
+    );
 
     // Create a new patient and save to the database
     const newPatient = await this.userRepository.create({
@@ -200,11 +203,12 @@ export class PatientsService {
         sortOrder = 'asc',
       } = paginationFilterDto;
 
-      // Fetch paginated visits with total count
+      // Fetch paginated visits with total count (including signals)
       const { visits, totalCount } =
-        await this.visitRepository.getAllVisitsWithPagination(
-          paginationFilterDto,
-        );
+        await this.visitRepository.getAllVisitsWithPagination({
+          ...paginationFilterDto,
+          filters: '{"signals":{"$ne":null},"isSignalResolved":false}',
+        });
 
       if (!visits || visits.length === 0) {
         return ResponseDto.success(
@@ -213,46 +217,41 @@ export class PatientsService {
         );
       }
 
-      // Enhance visits with scores and signals
-      const enhancedVisits = await Promise.all(
-        visits.map(async (visit: any) => {
-          const answers = await this.answerRepository.getAnswersByVisitId(
-            visit._id,
-          );
+      // Enhance visits with scores and signals (fetching from DB)
+      const enhancedVisits = visits.map((visit: any) => {
+        const visitData: any = {
+          _id: visit._id,
+          patientInfo: visit.patientId,
+          visitId: visit.visitId,
+          date: visit.date,
+          createdAt: visit.createdAt,
+          updatedAt: visit.updatedAt,
+          summary: visit.summary,
+          scores: visit.signals
+            ? {
+                g8Score: visit.signals.g8Score,
+                sarcFScore: visit.signals.sarcFScore,
+              }
+            : {},
+        };
 
-          // Calculate scores and signals
-          const { g8Score, sarcFScore, distressSignal } =
-            this.calculateScoresAndSignals(answers);
+        // Extract existing signals from DB
+        const signals = visit.signals
+          ? {
+              g8Signal: visit.signals.g8Score < g8ScoreMapping.thresold,
+              sarcFSignal:
+                visit.signals.sarcFScore >= sarcFScoreMapping.thresold,
+              distressSignal: visit.signals.distressSignal,
+            }
+          : {};
 
-          // Prepare visit data with scores and signals
-          const visitData: any = {
-            _id: visit._id,
-            patientInfo: visit.patientId,
-            visitId: visit.visitId,
-            date: visit.date,
-            createdAt: visit.createdAt,
-            updatedAt: visit.updatedAt,
-            summary: visit.summary,
-            scores: {
-              g8Score,
-              sarcFScore,
-            },
-          };
+        // Only include signals if any of them is true
+        if (Object.values(signals).some((signal) => signal)) {
+          visitData.signals = signals;
+        }
 
-          const signals = {
-            g8Signal: g8Score < g8ScoreMapping.thresold,
-            sarcFSignal: sarcFScore >= sarcFScoreMapping.thresold,
-            distressSignal,
-          };
-
-          // Only include signals if any of them is true
-          if (Object.values(signals).some((signal) => signal)) {
-            visitData.signals = signals;
-          }
-
-          return visitData;
-        }),
-      );
+        return visitData;
+      });
 
       // Filter out visits with no valid signals
       const filteredVisits = enhancedVisits.filter((visit) => visit.signals);
@@ -275,6 +274,93 @@ export class PatientsService {
       return ResponseDto.error(error.message || 'Failed to fetch visits', 500);
     }
   }
+  // async getAllVisitsWithPagination(
+  //   paginationFilterDto: PaginationFilterDto,
+  // ): Promise<ResponseDto> {
+  //   try {
+  //     const {
+  //       filters,
+  //       page = 1,
+  //       limit = 10,
+  //       sortBy = 'createdAt',
+  //       sortOrder = 'asc',
+  //     } = paginationFilterDto;
+
+  //     // Fetch paginated visits with total count
+  //     const { visits, totalCount } =
+  //       await this.visitRepository.getAllVisitsWithPagination(
+  //         paginationFilterDto,
+  //       );
+
+  //     if (!visits || visits.length === 0) {
+  //       return ResponseDto.success(
+  //         { visits: [], pageInfo: { page, limit, totalCount } },
+  //         'No visits found',
+  //       );
+  //     }
+
+  //     // Enhance visits with scores and signals
+  //     const enhancedVisits = await Promise.all(
+  //       visits.map(async (visit: any) => {
+  //         const answers = await this.answerRepository.getAnswersByVisitId(
+  //           visit._id,
+  //         );
+
+  //         // Calculate scores and signals
+  //         const { g8Score, sarcFScore, distressSignal } =
+  //           this.calculateScoresAndSignals(answers);
+
+  //         // Prepare visit data with scores and signals
+  //         const visitData: any = {
+  //           _id: visit._id,
+  //           patientInfo: visit.patientId,
+  //           visitId: visit.visitId,
+  //           date: visit.date,
+  //           createdAt: visit.createdAt,
+  //           updatedAt: visit.updatedAt,
+  //           summary: visit.summary,
+  //           scores: {
+  //             g8Score,
+  //             sarcFScore,
+  //           },
+  //         };
+
+  //         const signals = {
+  //           g8Signal: g8Score < g8ScoreMapping.thresold,
+  //           sarcFSignal: sarcFScore >= sarcFScoreMapping.thresold,
+  //           distressSignal,
+  //         };
+
+  //         // Only include signals if any of them is true
+  //         if (Object.values(signals).some((signal) => signal)) {
+  //           visitData.signals = signals;
+  //         }
+
+  //         return visitData;
+  //       }),
+  //     );
+
+  //     // Filter out visits with no valid signals
+  //     const filteredVisits = enhancedVisits.filter((visit) => visit.signals);
+
+  //     // Create pageInfo object
+  //     const pageInfo = {
+  //       page,
+  //       limit,
+  //       totalCount,
+  //       totalPages: Math.ceil(totalCount / limit),
+  //     };
+
+  //     // Return success response
+  //     return ResponseDto.success(
+  //       { visits: filteredVisits, pageInfo },
+  //       'Visits fetched successfully',
+  //     );
+  //   } catch (error) {
+  //     console.error('Error fetching visits:', error);
+  //     return ResponseDto.error(error.message || 'Failed to fetch visits', 500);
+  //   }
+  // }
 
   // Helper method to parse filters
   private parseFilters(filters: string): any {
@@ -510,19 +596,85 @@ export class PatientsService {
   //   }
   // }
 
+  // async getSignalDataForYear(year: number): Promise<ResponseDto> {
+  //   try {
+  //     const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+  //     const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+
+  //     // Fetch all visits within the year
+  //     const visits: any = await this.visitRepository.getVisitsByMonth(
+  //       startDate,
+  //       endDate,
+  //     );
+
+  //     // Fetch all patients created within the year
+  //     const patients: any = await this.userRepository.getPatientsByMonth(
+  //       startDate,
+  //       endDate,
+  //     );
+
+  //     // Initialize monthly signal counts
+  //     const monthlySignals = Array.from({ length: 12 }, (_, i) => ({
+  //       month: i + 1,
+  //       distressCount: 0,
+  //       sarcFCount: 0,
+  //       g8Count: 0,
+  //     }));
+
+  //     // Initialize monthly patient counts
+  //     const monthlyPatients = Array.from({ length: 12 }, (_, i) => ({
+  //       month: i + 1,
+  //       patientCount: 0,
+  //     }));
+
+  //     // Calculate scores and signals for each visit
+  //     visits.forEach((visit) => {
+  //       const { g8Score, sarcFScore, distressSignal } =
+  //         this.calculateScoresAndSignals(visit.answers || []);
+
+  //       const month = new Date(visit.createdAt).getMonth(); // Get month (0-11)
+
+  //       // Update monthly signal counts
+  //       if (distressSignal) monthlySignals[month].distressCount += 1;
+  //       if (g8Score < g8ScoreMapping.thresold)
+  //         monthlySignals[month].g8Count += 1;
+  //       if (sarcFScore >= sarcFScoreMapping.thresold)
+  //         monthlySignals[month].sarcFCount += 1;
+  //     });
+
+  //     // Count patients created by month
+  //     patients.forEach((patient) => {
+  //       const month = new Date(patient.createdAt).getMonth(); // Get month (0-11)
+  //       monthlyPatients[month].patientCount += 1;
+  //     });
+
+  //     // Return success response
+  //     return ResponseDto.success(
+  //       {
+  //         signals: monthlySignals,
+  //         patients: monthlyPatients,
+  //       },
+  //       'Signal and patient data retrieved successfully',
+  //     );
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //     return ResponseDto.error(error.message || 'Failed to retrieve data', 500);
+  //   }
+  // }
+
   async getSignalDataForYear(year: number): Promise<ResponseDto> {
     try {
       const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
       const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
 
-      // Fetch all visits within the year
-      const visits: any = await this.visitRepository.getVisitsByMonth(
+      // Fetch all visits within the year (including signals)
+      const visits = await this.visitRepository.getVisitsByMonth(
         startDate,
         endDate,
       );
 
       // Fetch all patients created within the year
-      const patients: any = await this.userRepository.getPatientsByMonth(
+      const patients = await this.userRepository.getPatientsByMonth(
         startDate,
         endDate,
       );
@@ -541,28 +693,31 @@ export class PatientsService {
         patientCount: 0,
       }));
 
-      // Calculate scores and signals for each visit
+      // Process visits to update signal counts
       visits.forEach((visit) => {
-        const { g8Score, sarcFScore, distressSignal } =
-          this.calculateScoresAndSignals(visit.answers || []);
+        const { signals } = visit;
+        const month = new Date(visit.date).getMonth(); // Get month index (0-11)
 
-        const month = new Date(visit.createdAt).getMonth(); // Get month (0-11)
-
-        // Update monthly signal counts
-        if (distressSignal) monthlySignals[month].distressCount += 1;
-        if (g8Score < g8ScoreMapping.thresold)
-          monthlySignals[month].g8Count += 1;
-        if (sarcFScore >= sarcFScoreMapping.thresold)
-          monthlySignals[month].sarcFCount += 1;
+        if (signals) {
+          console.log(
+            '🚀 ~ PatientsService ~ visits.forEach ~ signals:',
+            signals,
+          );
+          if (signals.distressSignal) monthlySignals[month].distressCount += 1;
+          if (signals.g8Score < g8ScoreMapping.thresold)
+            monthlySignals[month].g8Count += 1;
+          if (signals.sarcFScore >= sarcFScoreMapping.thresold)
+            monthlySignals[month].sarcFCount += 1;
+        }
       });
 
       // Count patients created by month
-      patients.forEach((patient) => {
-        const month = new Date(patient.createdAt).getMonth(); // Get month (0-11)
+      patients.forEach((patient: any) => {
+        const month = new Date(patient?.createdAt).getMonth(); // Get month index (0-11)
         monthlyPatients[month].patientCount += 1;
       });
 
-      // Return success response
+      // Return response in the original structure
       return ResponseDto.success(
         {
           signals: monthlySignals,
@@ -586,7 +741,7 @@ export class PatientsService {
           this.userRepository.getTotalDoctors(),
           this.visitRepository
             .getTable()
-            .find({ isSignalResolved: false })
+            .find({ isSignalResolved: false, signals: { $ne: null } })
             .lean(),
         ]);
 
@@ -611,11 +766,22 @@ export class PatientsService {
       //   )
       // ).filter(Boolean).length;
 
+      // const totalSignals = await this.visitRepository
+      //   .getTable()
+      //   .where({ signals: { $ne: null } })
+      //   .countDocuments();
       const totalSignals = await this.visitRepository
         .getTable()
-        .where({ signals: { $ne: null } })
+        .where({
+          $or: [
+            { 'signals.g8Score': { $lt: g8ScoreMapping.thresold } }, // G8 score below threshold
+            { 'signals.sarcFScore': { $gte: sarcFScoreMapping.thresold } }, // Sarc-F score meets/exceeds threshold
+            { 'signals.distressSignal': true }, // Distress signal explicitly marked as true
+          ],
+          isSignalResolved: false,
+          signals: { $ne: null },
+        })
         .countDocuments();
-
       return ResponseDto.success(
         {
           totalPatients,

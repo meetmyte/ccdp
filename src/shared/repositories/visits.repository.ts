@@ -73,7 +73,7 @@ export class VisitsRepository {
       .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
       .skip(skip)
       .limit(limit)
-      .lean();
+      .exec();
 
     if (!visits || visits.length === 0) {
       return { visits, totalCount };
@@ -85,6 +85,7 @@ export class VisitsRepository {
   async getVisitsByMonth(startDate, endDate) {
     const visits = await this.visitModel.find({
       createdAt: { $gte: startDate, $lte: endDate },
+      isSignalResolved: false,
     });
     return visits;
   }

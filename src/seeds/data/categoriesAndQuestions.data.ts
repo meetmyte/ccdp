@@ -12,7 +12,7 @@ export default [
     name: 'Distress Screening',
     questions: [
       {
-        text: 'How would you rate your level of pain right now?',
+        text: 'What is your current pain intensity?',
         type: 'scale',
         scale: {
           min: 0,
@@ -21,7 +21,7 @@ export default [
         },
       },
       {
-        text: 'How would you rate your level of tiredness?',
+        text: 'How tired do you feel at this moment?',
         type: 'scale',
         scale: {
           min: 0,
@@ -30,7 +30,7 @@ export default [
         },
       },
       {
-        text: 'How would you rate your level of drowsiness?',
+        text: 'How drowsy are you right now?',
         type: 'scale',
         scale: {
           min: 0,
@@ -39,7 +39,7 @@ export default [
         },
       },
       {
-        text: 'How would you rate your level of nausea?',
+        text: 'How intense is your nausea currently?',
         type: 'scale',
         scale: {
           min: 0,
@@ -48,7 +48,7 @@ export default [
         },
       },
       {
-        text: 'How would you rate your appetite?',
+        text: 'How would you describe your appetite today?',
         type: 'scale',
         scale: {
           min: 0,
@@ -58,7 +58,7 @@ export default [
         },
       },
       {
-        text: 'How would you rate your breathing?',
+        text: 'How difficult is your breathing at the moment?',
         type: 'scale',
         scale: {
           min: 0,
@@ -68,7 +68,7 @@ export default [
         },
       },
       {
-        text: 'How would you describe your mood?',
+        text: 'How is your mood at present?',
         type: 'scale',
         scale: {
           min: 0,
@@ -77,7 +77,7 @@ export default [
         },
       },
       {
-        text: 'How anxious do you feel?',
+        text: 'What is your current level of anxiety?',
         type: 'scale',
         scale: {
           min: 0,
@@ -86,7 +86,7 @@ export default [
         },
       },
       {
-        text: 'How would you rate your overall wellbeing?',
+        text: 'How would you rate your overall wellbeing today?',
         type: 'scale',
         scale: {
           min: 0,
@@ -95,7 +95,7 @@ export default [
         },
       },
       {
-        text: "Are there any other symptoms you are experiencing that we haven't discussed?",
+        text: 'How severe are any additional symptoms you might be experiencing?',
         type: 'scale',
         scale: {
           min: 0,
@@ -104,7 +104,7 @@ export default [
         },
       },
       {
-        text: 'Interactive Image of the Front and Back Human Body – User can draw locations where they feel pain.',
+        text: 'Tap the body image to mark areas where you experience pain.',
         type: 'interactive_image',
         description: 'User can draw pain points on an interactive body map.',
       },
